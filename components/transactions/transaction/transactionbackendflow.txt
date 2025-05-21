@@ -1,0 +1,419 @@
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Arg,
+  Ctx,
+  ID,
+  UseMiddleware,
+} from "type-graphql";
+import {
+  Transaction,
+  CreateTransactionInput,
+  ProcessPaymentInput,
+} from "../types/transaction.type";
+import {
+  UpdateDeliveryInput,
+  ConfirmDeliveryInput,
+  ReleaseEscrowInput,
+  CancelTransactionInput,
+  RequestRefundInput,
+} from "../types/transaction.input";
+import {
+  TransactionStatus,
+  EscrowStatus,
+  PaymentStatus,
+  PaymentCurrency,
+  WalletTransactionType,
+  WalletTransactionStatus,
+} from "../../generated/prisma-client";
+import { generateTransactionCode } from "../../utils/transaction";
+import { calculateEscrowFee } from "../../utils/fees";
+import { GraphQLContext } from "../types/context.type";
+import { prisma } from "../../config/db.config";
+import { Decimal } from "../../generated/prisma-client/runtime/library";
+import { isAuthenticated } from "../middleware/auth.middleware";
+import { sendNotification } from "../../services/notification.service";
+import { TransactionAuditService } from "../../services/transaction-audit.service";
+
+const transactionAudit = new TransactionAuditService();
+
+@Resolver(Transaction)
+export class TransactionResolver {
+ 
+  @Mutation(() => Transaction)
+  @UseMiddleware(isAuthenticated)
+  async processPayment(
+    @Arg("input") input: ProcessPaymentInput,
+    @Ctx() { user }: GraphQLContext
+  ): Promise<Transaction> {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: input.transactionId },
+      include: { payment: true },
+    });
+
+    if (!transaction) throw new Error("Transaction not found");
+    if (transaction.buyerId !== user?.id)
+      throw new Error("Only the buyer can process payment");
+    if (transaction.isPaid) throw new Error("Transaction is already paid");
+
+    const payment = await prisma.payment.create({
+      data: {
+        amount: transaction.amount,
+        fee: transaction.escrowFee,
+        totalAmount: transaction.totalAmount,
+        paymentCurrency: transaction.paymentCurrency,
+        paymentGateway: input.paymentGateway,
+        gatewayReference: input.gatewayReference,
+        status: PaymentStatus.PENDING,
+      },
+    });
+
+    return prisma.transaction.update({
+      where: { id: input.transactionId },
+      data: {
+        paymentId: payment.id,
+        isPaid: true,
+        status: TransactionStatus.IN_PROGRESS,
+        escrowStatus: EscrowStatus.FUNDED,
+        logs: {
+          create: {
+            action: "PAYMENT",
+            status: TransactionStatus.IN_PROGRESS,
+            escrowStatus: EscrowStatus.FUNDED,
+            performedBy: user?.id,
+            description: "Payment processed",
+          },
+        },
+      },
+      include: {
+        buyer: true,
+        seller: true,
+        payment: true,
+        logs: true,
+      },
+    });
+  }
+
+  @Mutation(() => Transaction)
+  @UseMiddleware(isAuthenticated)
+  async updateDelivery(
+    @Arg("input") input: UpdateDeliveryInput,
+    @Ctx() { user }: GraphQLContext
+  ): Promise<Transaction> {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: input.transactionId },
+    });
+
+    if (!transaction) throw new Error("Transaction not found");
+    if (transaction.sellerId !== user?.id)
+      throw new Error("Only the seller can update delivery information");
+    if (transaction.status !== TransactionStatus.IN_PROGRESS) {
+      throw new Error("Transaction must be in progress to update delivery");
+    }
+
+    return prisma.transaction.update({
+      where: { id: input.transactionId },
+      data: {
+        deliveryMethod: input.deliveryMethod,
+        trackingInfo: input.trackingInfo,
+        expectedDeliveryDate: input.expectedDeliveryDate,
+        logs: {
+          create: {
+            action: "DELIVERY_UPDATE",
+            status: transaction.status,
+            escrowStatus: transaction.escrowStatus,
+            performedBy: user?.id,
+            description: "Delivery information updated",
+          },
+        },
+      },
+      include: {
+        buyer: true,
+        seller: true,
+        payment: true,
+        logs: true,
+      },
+    });
+  }
+
+  @Mutation(() => Transaction)
+  @UseMiddleware(isAuthenticated)
+  async confirmDelivery(
+    @Arg("input") input: ConfirmDeliveryInput,
+    @Ctx() { user }: GraphQLContext
+  ): Promise<Transaction> {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: input.transactionId },
+      include: {
+        seller: true,
+      },
+    });
+
+    if (!transaction) throw new Error("Transaction not found");
+    if (transaction.buyerId !== user?.id)
+      throw new Error("Only the buyer can confirm delivery");
+    if (transaction.status !== TransactionStatus.IN_PROGRESS) {
+      throw new Error("Transaction must be in progress to confirm delivery");
+    }
+
+    // Update transaction status to DELIVERED
+    const updatedTransaction = await prisma.transaction.update({
+      where: { id: input.transactionId },
+      data: {
+        status: TransactionStatus.DELIVERED,
+        actualDeliveryDate: new Date(),
+        logs: {
+          create: {
+            action: "DELIVERY_CONFIRMED",
+            status: TransactionStatus.DELIVERED,
+            escrowStatus: transaction.escrowStatus,
+            performedBy: user?.id,
+            description: "Delivery confirmed by buyer",
+          },
+        },
+      },
+      include: {
+        buyer: true,
+        seller: true,
+        payment: true,
+        logs: true,
+      },
+    });
+
+    // Automatically release funds to seller's wallet
+    try {
+      // Find seller's wallet
+      const sellerWallet = await prisma.wallet.findUnique({
+        where: { userId: transaction.sellerId },
+      });
+
+      if (sellerWallet) {
+        // Generate a unique reference for the transaction
+        const reference = `ESCROW-RELEASE-${transaction.transactionCode}`;
+        const amount = transaction.amount;
+
+        // Update seller's wallet balance
+        const balanceBefore = sellerWallet.balance;
+        const balanceAfter = sellerWallet.balance.add(amount);
+
+        await prisma.$transaction(async (tx) => {
+          // Create wallet transaction
+          await tx.walletTransaction.create({
+            data: {
+              walletId: sellerWallet.id,
+              amount: amount,
+              currency: transaction.paymentCurrency,
+              description: `Payment received for transaction ${transaction.transactionCode}`,
+              type: WalletTransactionType.ESCROW_RELEASE,
+              reference,
+              balanceBefore,
+              balanceAfter,
+              status: WalletTransactionStatus.COMPLETED,
+            },
+          });
+
+          // Update wallet balance
+          await tx.wallet.update({
+            where: { id: sellerWallet.id },
+            data: {
+              balance: balanceAfter,
+            },
+          });
+
+          // Update transaction escrow status
+          await tx.transaction.update({
+            where: { id: transaction.id },
+            data: {
+              status: TransactionStatus.COMPLETED,
+              escrowStatus: EscrowStatus.RELEASED,
+              completedAt: new Date(),
+              logs: {
+                create: {
+                  action: "ESCROW_RELEASED_AUTO",
+                  status: TransactionStatus.COMPLETED,
+                  escrowStatus: EscrowStatus.RELEASED,
+                  performedBy: user?.id as string,
+                  description:
+                    "Escrow automatically released to seller upon delivery confirmation",
+                },
+              },
+            },
+          });
+        });
+
+        // Send notifications to both buyer and seller
+        const sellerName = transaction.seller?.firstName || "Seller";
+        // const buyerName = transaction.buyer?.firstName || "Buyer";
+
+        // Seller notification
+        const sellerNotificationMessage = `Payment of ${amount} ${transaction.paymentCurrency} has been released to your wallet for transaction ${transaction.transactionCode}.`;
+        await sendNotification({
+          userId: transaction.sellerId,
+          title: "Payment Released",
+          message: sellerNotificationMessage,
+          type: "TRANSACTION",
+          entityId: transaction.id,
+          entityType: "Transaction",
+          forceAll: true, // Ensure critical transaction notifications are sent
+        });
+
+        // Buyer notification
+        const buyerNotificationMessage = `Your payment has been released to ${sellerName} for transaction ${transaction.transactionCode}. Thank you for using our service!`;
+        await sendNotification({
+          userId: transaction.buyerId,
+          title: "Transaction Completed",
+          message: buyerNotificationMessage,
+          type: "TRANSACTION",
+          entityId: transaction.id,
+          entityType: "Transaction",
+          forceAll: true, // Ensure critical transaction notifications are sent
+        });
+      }
+    } catch (error) {
+      console.error("Error releasing escrow funds:", error);
+      // We don't throw here to ensure the delivery confirmation still succeeds
+      // The admin can manually release the funds if this automatic process fails
+    }
+
+    return updatedTransaction;
+  }
+
+  @Mutation(() => Transaction)
+  @UseMiddleware(isAuthenticated)
+  async releaseEscrow(
+    @Arg("input") input: ReleaseEscrowInput,
+    @Ctx() { user }: GraphQLContext
+  ): Promise<Transaction> {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: input.transactionId },
+    });
+
+    if (!transaction) throw new Error("Transaction not found");
+    if (transaction.buyerId !== user?.id)
+      throw new Error("Only the buyer can release escrow");
+    if (transaction.status !== TransactionStatus.DELIVERED)
+      throw new Error("Transaction must be delivered to release escrow");
+    if (transaction.escrowStatus !== EscrowStatus.FUNDED)
+      throw new Error("Escrow must be funded to release");
+
+    return prisma.transaction.update({
+      where: { id: input.transactionId },
+      data: {
+        status: TransactionStatus.COMPLETED,
+        escrowStatus: EscrowStatus.RELEASED,
+        completedAt: new Date(),
+        logs: {
+          create: {
+            action: "ESCROW_RELEASED",
+            status: TransactionStatus.COMPLETED,
+            escrowStatus: EscrowStatus.RELEASED,
+            performedBy: user?.id,
+            description: "Escrow released by buyer",
+          },
+        },
+      },
+      include: {
+        buyer: true,
+        seller: true,
+        payment: true,
+        logs: true,
+      },
+    });
+  }
+
+  @Mutation(() => Transaction)
+  @UseMiddleware(isAuthenticated)
+  async cancelTransaction(
+    @Arg("input") input: CancelTransactionInput,
+    @Ctx() { user }: GraphQLContext
+  ): Promise<Transaction> {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: input.transactionId },
+    });
+
+    if (!transaction) throw new Error("Transaction not found");
+    if (transaction.buyerId !== user?.id && transaction.sellerId !== user?.id) {
+      throw new Error("Only the buyer or seller can cancel the transaction");
+    }
+
+    if (
+      transaction.status === TransactionStatus.COMPLETED ||
+      transaction.status === TransactionStatus.CANCELED
+    ) {
+      throw new Error(
+        "Cannot cancel a completed or already canceled transaction"
+      );
+    }
+
+    return prisma.transaction.update({
+      where: { id: input.transactionId },
+      data: {
+        status: TransactionStatus.CANCELED,
+        canceledAt: new Date(),
+        logs: {
+          create: {
+            action: "CANCELED",
+            status: TransactionStatus.CANCELED,
+            escrowStatus: transaction.escrowStatus,
+            performedBy: user?.id,
+            description: `Transaction canceled: ${input.reason}`,
+          },
+        },
+      },
+      include: {
+        buyer: true,
+        seller: true,
+        payment: true,
+        logs: true,
+      },
+    });
+  }
+
+  @Mutation(() => Transaction)
+  @UseMiddleware(isAuthenticated)
+  async requestRefund(
+    @Arg("input") input: RequestRefundInput,
+    @Ctx() { user }: GraphQLContext
+  ): Promise<Transaction> {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: input.transactionId },
+    });
+
+    if (!transaction) throw new Error("Transaction not found");
+    if (transaction.buyerId !== user?.id)
+      throw new Error("Only the buyer can request a refund");
+    if (!transaction.isPaid)
+      throw new Error("Cannot request refund for unpaid transaction");
+    if (
+      transaction.status === TransactionStatus.COMPLETED ||
+      transaction.status === TransactionStatus.REFUNDED
+    ) {
+      throw new Error(
+        "Cannot request refund for completed or already refunded transaction"
+      );
+    }
+
+    return prisma.transaction.update({
+      where: { id: input.transactionId },
+      data: {
+        status: TransactionStatus.REFUND_REQUESTED,
+        logs: {
+          create: {
+            action: "REFUND_REQUESTED",
+            status: TransactionStatus.REFUND_REQUESTED,
+            escrowStatus: transaction.escrowStatus,
+            performedBy: user?.id,
+            description: `Refund requested: ${input.reason}`,
+          },
+        },
+      },
+      include: {
+        buyer: true,
+        seller: true,
+        payment: true,
+        logs: true,
+      },
+    });
+  }
+}

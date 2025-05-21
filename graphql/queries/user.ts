@@ -1,0 +1,101 @@
+import { gql } from "@apollo/client";
+
+export const ME = gql`
+  query Me {
+    me {
+      id
+      email
+      firstName
+      lastName
+      phoneNumber
+      profileImageUrl
+      verified
+      createdAt
+      updatedAt
+      providers {
+        id
+        provider
+        refreshToken
+        tokenExpiry
+        createdAt
+      }
+      address {
+        id
+        street
+        city
+        state
+        postalCode
+        country
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+export const GET_USER = gql`
+  query User($userId: String!) {
+    user(id: $userId) {
+      id
+      email
+      firstName
+      lastName
+      phoneNumber
+      profileImageUrl
+      verified
+      createdAt
+      updatedAt
+      address {
+        id
+        street
+        city
+        state
+        postalCode
+        country
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+export const GET_USERS = gql`
+  query Users {
+    users {
+      id
+      email
+      firstName
+      lastName
+      phoneNumber
+      profileImageUrl
+      verified
+      createdAt
+      updatedAt
+      addressId
+      address {
+        id
+        street
+        city
+        state
+        postalCode
+        country
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+export const SEARCH_USER = gql`
+  query SearchUser($input: String!) {
+    searchUser(input: $input) {
+      id
+      email
+      firstName
+      lastName
+      phoneNumber
+      profileImageUrl
+      verified
+    }
+  }
+`;
