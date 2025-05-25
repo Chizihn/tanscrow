@@ -121,13 +121,13 @@ export function SignUpComponent() {
   // Form submit handlers
   async function onEmailSignUpSubmit(data: EmailSignupSchema) {
     signUpWithEmail({
-      variables: data,
+      variables: { input: data },
     });
   }
 
   async function onPhoneSignUpSubmit(data: PhoneSignupSchema) {
     signUpWithPhone({
-      variables: data,
+      variables: { input: data },
     });
   }
 
