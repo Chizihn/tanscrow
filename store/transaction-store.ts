@@ -3,7 +3,7 @@ import { create } from "zustand";
 
 interface TransactionState {
   transaction: Partial<Transaction> | null;
-  setTransaction: (Transaction: Partial<Transaction> | null) => void;
+  setTransaction: (transaction: Partial<Transaction> | null) => void;
 }
 
 export const useTransactionStore = create<TransactionState>()((set) => ({

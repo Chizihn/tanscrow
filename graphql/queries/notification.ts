@@ -8,10 +8,8 @@ export const GET_NOTIFICATIONS = gql`
       message
       type
       isRead
-      relatedEntityId
       relatedEntityType
       createdAt
-      updatedAt
     }
   }
 `;

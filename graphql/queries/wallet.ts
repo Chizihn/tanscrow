@@ -32,3 +32,12 @@ export const GET_WALLET_TRANSACTIONS = gql`
     }
   }
 `;
+
+export const RESOLVE_ACCOUNT_DETAILS = gql`
+  query ResolveAccountDetails($input: AccountResolveInput!) {
+    resolveAccountDetails(input: $input) {
+      accountNumber
+      accountName
+    }
+  }
+`;

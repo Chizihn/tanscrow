@@ -18,7 +18,7 @@ export default function TransactionsPage() {
   const { data, loading, error } = useQuery<{ transactions: Transaction[] }>(
     GET_TRANSACTIONS,
     {
-      fetchPolicy: "cache-and-network",
+      fetchPolicy: "network-only",
       nextFetchPolicy: "cache-first",
       notifyOnNetworkStatusChange: true,
     }
@@ -103,8 +103,11 @@ export default function TransactionsPage() {
 
         {/* All Transactions */}
         <TabsContent value="all" className="space-y-4 mt-4">
-          <Tabs defaultValue="active">
+          <Tabs defaultValue="all">
             <TabsList>
+              <TabsTrigger value="all" disabled={loading}>
+                All
+              </TabsTrigger>
               <TabsTrigger value="active" disabled={loading}>
                 Active
               </TabsTrigger>
@@ -115,6 +118,29 @@ export default function TransactionsPage() {
                 Disputed
               </TabsTrigger>
             </TabsList>
+
+            {/* All */}
+            <TabsContent value="all" className="space-y-4 mt-4">
+              {loading ? (
+                // Skeleton loaders while loading
+                <>
+                  <TransactionCardSkeleton />
+                </>
+              ) : transactions.length === 0 ? (
+                <div className="py-10 text-center border rounded-lg">
+                  <p className="text-muted-foreground">No transactions found</p>
+                </div>
+              ) : (
+                transactions?.map((transaction) => (
+                  <TransactionCard
+                    key={transaction.id}
+                    transaction={transaction}
+                    statusColor={getStatusColor(transaction.status)}
+                    userId={user?.id as string}
+                  />
+                ))
+              )}
+            </TabsContent>
 
             {/* Active */}
             <TabsContent value="active" className="space-y-4 mt-4">

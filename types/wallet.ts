@@ -1,4 +1,4 @@
-import { PaymentCurrency } from "./payment";
+import { PaymentCurrency, PaymentGateway } from "./payment";
 import { User } from "./user";
 
 export interface Wallet {
@@ -45,4 +45,21 @@ export interface WalletTransaction {
   createdAt: Date;
   updatedAt: Date;
   wallet: Wallet;
+}
+
+export interface FundWalletInput {
+  amount: number;
+  currency: PaymentCurrency;
+  paymentGateway: PaymentGateway;
+}
+
+export interface Banks {
+  name: string;
+  code: string;
+  active: string;
+}
+
+export interface BankAccountInput {
+  accountNumber: string;
+  bankCode: string;
 }

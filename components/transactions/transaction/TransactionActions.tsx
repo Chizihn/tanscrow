@@ -24,7 +24,6 @@ import {
   CancelTransactionInput,
   DeliveryUpdateData,
   OpenDisputeInput,
-  ProcessPaymentInput,
   RequestRefundInput,
 } from "@/types/input";
 
@@ -34,7 +33,8 @@ import ConfirmDeliveryForm from "./forms/ConfirmDeliveryForm";
 import CancelTransactionForm from "./forms/CancelTransationForm";
 import RequestRefundForm from "./forms/PaymentRefundForm";
 import DisputeForm from "./forms/DisputeForm";
-import { showSuccessToast } from "@/components/Toast";
+import { showErrorToast, showSuccessToast } from "@/components/Toast";
+import { GET_TRANSACTION } from "@/graphql/queries/transaction";
 
 // Define the possible action types
 
@@ -61,27 +61,25 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
   onClose,
   onComplete,
 }) => {
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const [processPayment, { loading: paymentLoading }] = useMutation(
     PROCESS_PAYMENT,
     {
-      onCompleted: (data) => {
-        showSuccessToast("Payment Initiated. Redirecting...");
-        console.log("pay data", data);
-
-        if (data.processPayment.payment?.gatewayResponse?.redirectUrl) {
-          window.location.href =
-            data.processPayment.payment.gatewayResponse.redirectUrl;
-        }
+      onCompleted: () => {
+        setError(null);
+        showSuccessToast("Payment successful");
       },
-      onError: (error) => setError(error.message),
-      // refetchQueries: [
-      //   {
-      //     query: GET_TRANSACTION,
-      //     variables: { transactionid: transaction.id },
-      //   },
-      // ],
+      refetchQueries: [
+        {
+          query: GET_TRANSACTION,
+          variables: { id: transaction.id },
+        },
+      ],
+      onError: (error) => {
+        showErrorToast(error.message || "Payment was unsuccessful!");
+        setError(error.message);
+      },
     }
   );
 
@@ -89,6 +87,12 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
     UPDATE_DELIVERY,
     {
       onCompleted: (data) => onComplete(data),
+      refetchQueries: [
+        {
+          query: GET_TRANSACTION,
+          variables: { id: transaction.id },
+        },
+      ],
       onError: (error) => setError(error.message),
     }
   );
@@ -97,6 +101,13 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
     CONFIRM_DELIVERY,
     {
       onCompleted: (data) => onComplete(data),
+      refetchQueries: [
+        {
+          query: GET_TRANSACTION,
+          variables: { id: transaction.id },
+        },
+      ],
+      awaitRefetchQueries: true,
       onError: (error) => setError(error.message),
     }
   );
@@ -104,6 +115,12 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
   const [cancelTransaction, { loading: cancelTransactionLoading }] =
     useMutation(CANCEL_TRANSACTION, {
       onCompleted: (data) => onComplete(data),
+      refetchQueries: [
+        {
+          query: GET_TRANSACTION,
+          variables: { id: transaction.id },
+        },
+      ],
       onError: (error) => setError(error.message),
     });
 
@@ -111,20 +128,26 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
     REQUEST_REFUND,
     {
       onCompleted: (data) => onComplete(data),
+      refetchQueries: [
+        {
+          query: GET_TRANSACTION,
+          variables: { id: transaction.id },
+        },
+      ],
       onError: (error) => setError(error.message),
     }
   );
 
-  const handlePayment = (data: ProcessPaymentInput) => {
-    processPayment({ variables: { input: data } });
+  const handlePayment = (transactionId: string) => {
+    processPayment({ variables: { transactionId } });
   };
 
   const handleUpdateDelivery = (data: DeliveryUpdateData) => {
     updateDelivery({ variables: { input: data } });
   };
 
-  const handleConfirmDelivery = (data: string) => {
-    confirmDelivery({ variables: { input: data } });
+  const handleConfirmDelivery = (transactionId: string) => {
+    confirmDelivery({ variables: { transactionId } });
   };
 
   const handleCancelTransaction = (data: CancelTransactionInput) => {
@@ -154,7 +177,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
       form: (
         <PaymentForm
           transaction={transaction}
-          onSubmit={handlePayment}
+          onSubmit={() => handlePayment(transaction.id as string)}
           loading={paymentLoading}
         />
       ),
@@ -172,7 +195,8 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
     },
     CONFIRM_DELIVERY: {
       title: "Confirm Delivery",
-      description: "Confirm that you have received the goods or services",
+      description:
+        "Confirm that you have received the requested service from the seller.",
       form: (
         <ConfirmDeliveryForm
           transaction={transaction}

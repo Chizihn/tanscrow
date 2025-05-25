@@ -1,12 +1,14 @@
 "use client";
 import React from "react";
-import { Bell, ChevronDown, Menu } from "lucide-react";
+import { ChevronDown, Menu } from "lucide-react";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import { Sidebar } from "./Sidebar";
 import { User } from "@/types/user";
 import { renderProviderValue } from "@/utils/user";
+import { useNotifications } from "@/hooks/useNotification";
+import { NotificationSheet } from "../notification/NotificationSheet";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,11 +17,26 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
+  const [isNotificationSheetOpen, setIsNotificationSheetOpen] =
+    React.useState(false);
 
   const providerType = user?.providers?.[0]?.provider;
   const displayValue = providerType
     ? renderProviderValue(providerType, user as User)
     : "Unknown";
+
+  const {
+    notifications,
+    selectedNotification,
+    unreadCount,
+    notificationsLoading,
+    markAsReadLoading,
+    markAllAsReadLoading,
+    handleNotificationClick,
+    handleBackToNotifications,
+    handleMarkNotificationAsRead,
+    handleMarkAllNotificationsAsRead,
+  } = useNotifications();
 
   return (
     <div className="flex min-h-screen bg-background overflow-hidden">
@@ -57,14 +74,23 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </div>
           <div className="flex-1">
             {/* You can add a title or branding here */}
-            {/* <h1 className="text-xl font-semibold md:text-2xl">Tanscrow</h1> */}
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              {/* Notifications indicator */}
-              <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-red-600"></span>
-            </Button>
+            <NotificationSheet
+              notifications={notifications || []}
+              unreadCount={unreadCount}
+              loading={notificationsLoading}
+              selectedNotification={selectedNotification}
+              markAsReadLoading={markAsReadLoading}
+              markAllAsReadLoading={markAllAsReadLoading}
+              isOpen={isNotificationSheetOpen}
+              onOpenChange={setIsNotificationSheetOpen}
+              onNotificationClick={handleNotificationClick}
+              onBackToNotifications={handleBackToNotifications}
+              onMarkAsRead={handleMarkNotificationAsRead}
+              onMarkAllAsRead={handleMarkAllNotificationsAsRead}
+            />
+
             <div className="flex items-center gap-2">
               <Avatar>
                 <AvatarImage

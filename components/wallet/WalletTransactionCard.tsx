@@ -6,6 +6,7 @@ import {
 import { ArrowDown, ArrowUp, ArrowUpRight, Clock, Plus } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { formatDate } from "@/utils";
 
 interface WalletTransactionCardProps {
   transaction: Partial<WalletTransaction>;
@@ -29,7 +30,7 @@ const WalletTransactionCard: React.FC<WalletTransactionCardProps> = ({
             <div>
               <p className="font-medium">{transaction.description}</p>
               <p className="text-xs text-muted-foreground">
-                {transaction.createdAt?.toLocaleDateString()} •{" "}
+                {formatDate(transaction.createdAt as Date)} •{" "}
                 <span className="font-medium">{transaction.reference}</span>
               </p>
             </div>

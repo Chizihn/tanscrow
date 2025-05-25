@@ -18,10 +18,42 @@ export const CREATE_WALLET = gql`
 export const FUND_WALLET = gql`
   mutation FundWallet($input: FundWalletInput!) {
     fundWallet(input: $input) {
+      success
+      redirectUrl
+      reference
+      error
+    }
+  }
+`;
+
+export const WITHDRAW_TO_NIGERIAN_BANK = gql`
+  mutation WithdrawToNigerianBank($input: WithdrawToNigerianBankInput!) {
+    withdrawToNigerianBank(input: $input) {
+      id
+      bankName
+      accountNumber
+      accountName
+      bankCode
+      amount
+      currency
+      reference
+      status
+      failureReason
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const CONFIRM_WITHDRAWAL = gql`
+  mutation ConfirmWithdrawal($confirmWithdrawalId: ID!) {
+    confirmWithdrawal(id: $confirmWithdrawalId) {
       id
       amount
-      status
+      currency
       reference
+      status
+      failureReason
     }
   }
 `;

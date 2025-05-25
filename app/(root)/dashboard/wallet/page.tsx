@@ -11,7 +11,7 @@ import { showErrorToast, showSuccessToast } from "@/components/Toast";
 import { CreateWalletInput } from "@/types/input";
 import { PaymentCurrency } from "@/types/payment";
 
-interface WalletQueryResult {
+export interface WalletQueryResult {
   wallet: Wallet | null;
 }
 

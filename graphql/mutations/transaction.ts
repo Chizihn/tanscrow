@@ -212,8 +212,8 @@ export const UPDATE_DELIVERY = gql`
 `;
 
 export const CONFIRM_DELIVERY = gql`
-  mutation ConfirmDelivery($input: ConfirmDeliveryInput!) {
-    confirmDelivery(input: $input) {
+  mutation ConfirmDelivery($transactionId: String!) {
+    confirmDelivery(transactionId: $transactionId) {
       id
       title
       description
@@ -250,8 +250,8 @@ export const CONFIRM_DELIVERY = gql`
 `;
 
 export const PROCESS_PAYMENT = gql`
-  mutation ProcessPayment($input: ProcessPaymentInput!) {
-    processPayment(input: $input) {
+  mutation PayForTransaction($transactionId: String!) {
+    payForTransaction(transactionId: $transactionId) {
       id
       transactionCode
       title
@@ -292,11 +292,7 @@ export const PROCESS_PAYMENT = gql`
 `;
 
 export const VERIFY_PAYMENT = gql`
-  mutation HandleWebhook(
-    $gateway: PaymentGateway!
-    $payload: JSONObject!
-    $signature: String!
-  ) {
-    handleWebhook(gateway: $gateway, payload: $payload, signature: $signature)
+  query Query($gateway: PaymentGateway!, $reference: String!) {
+    verifyPayment(gateway: $gateway, reference: $reference)
   }
 `;

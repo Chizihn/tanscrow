@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 
 import {
   Card,
@@ -18,31 +20,93 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, AlertCircle } from "lucide-react";
-import Link from "next/link";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PaymentCurrency } from "@/types/payment";
+import { useLazyQuery, useQuery } from "@apollo/client";
+import { NIGERIAN_BANKS } from "@/constants";
+import { GET_WALLET, RESOLVE_ACCOUNT_DETAILS } from "@/graphql/queries/wallet";
+import PageRouter from "@/components/PageRouter";
+import { WalletQueryResult } from "../page";
+import ErrorState from "@/components/ErrorState";
+import { showSuccessToast } from "@/components/Toast";
 
 export default function WithdrawFundsPage() {
-  const wallet = {
-    id: "1",
-    balance: 250000,
-    currency: PaymentCurrency.NGN,
-  };
+  const [bankCode, setBankCode] = useState<string>("");
+  const [accountNumber, setAccountNumber] = useState<string>("");
+  const [accountName, setAccountName] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
+
+  // Fetch wallet data
+  const {
+    data,
+    loading: walletLoading,
+    error: walletError,
+  } = useQuery<WalletQueryResult>(GET_WALLET, {
+    fetchPolicy: "network-only",
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const wallet = data?.wallet ?? null;
+
+  // Simple lazy query for resolving bank account details
+  const [
+    resolveAccountDetails,
+    { loading: resolvingAccount, error: resolveError },
+  ] = useLazyQuery(RESOLVE_ACCOUNT_DETAILS, {
+    onCompleted: (data) => {
+      if (data?.resolveAccountDetails?.accountName) {
+        setAccountName(data.resolveAccountDetails.accountName);
+      }
+    },
+    onError: (error) => {
+      showSuccessToast(error.message);
+      setAccountName("");
+    },
+    fetchPolicy: "no-cache",
+  });
+
+  // Simple effect for account resolution
+  useEffect(() => {
+    if (accountNumber.length === 10 && bankCode) {
+      setAccountName("");
+      resolveAccountDetails({
+        variables: {
+          input: { accountNumber, bankCode },
+        },
+      });
+    } else {
+      setAccountName("");
+    }
+  }, [accountNumber, bankCode, resolveAccountDetails]);
+
+  // Simple calculations
+  const numAmount = Number(amount || 0);
+  const processingFee = 100;
+  const totalToReceive = Math.max(numAmount - processingFee, 0);
+
+  // Show error state if wallet query failed
+  if (walletError) {
+    return <ErrorState message={walletError.message} />;
+  }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/wallet">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Withdraw Funds</h2>
-          <p className="text-muted-foreground">
-            Transfer funds to your bank account
-          </p>
+          <div className="space-y-3">
+            <PageRouter
+              parentLabel="Back to Wallet"
+              parentPath="/dashboard/wallet"
+            />
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">
+                Withdraw Funds
+              </h2>
+              <p className="text-muted-foreground">
+                Transfer funds to your bank account
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -62,40 +126,53 @@ export default function WithdrawFundsPage() {
             Enter your bank account information for the withdrawal
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-10">
           <div className="space-y-2">
             <Label htmlFor="amount">Amount (₦)</Label>
             <Input
               id="amount"
-              name="amount"
               type="number"
               placeholder="Enter amount"
+              value={amount}
               min="5000"
-              max={wallet.balance}
-              required
+              max={wallet?.balance || 0}
+              onChange={(e) => setAmount(e.target.value)}
+              disabled={walletLoading || !wallet}
             />
             <p className="text-xs text-muted-foreground">
-              Available balance: ₦{wallet.balance.toLocaleString()}
+              {walletLoading ? (
+                <span className="flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Loading balance...
+                </span>
+              ) : wallet ? (
+                `Available balance: ₦${wallet.balance.toLocaleString()}`
+              ) : (
+                "Balance unavailable"
+              )}
             </p>
+            {amount && wallet && Number(amount) > Number(wallet.balance) && (
+              <p className="text-sm text-red-500">
+                Amount exceeds available balance
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="bankName">Bank Name</Label>
-            <Select>
-              <SelectTrigger id="bankName">
+            <Label htmlFor="bank">Bank</Label>
+            <Select
+              onValueChange={setBankCode}
+              disabled={walletLoading || !wallet}
+            >
+              <SelectTrigger id="bank">
                 <SelectValue placeholder="Select bank" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="access">Access Bank</SelectItem>
-                <SelectItem value="gtb">Guaranty Trust Bank</SelectItem>
-                <SelectItem value="zenith">Zenith Bank</SelectItem>
-                <SelectItem value="first">First Bank</SelectItem>
-                <SelectItem value="uba">United Bank for Africa</SelectItem>
-                <SelectItem value="sterling">Sterling Bank</SelectItem>
-                <SelectItem value="union">Union Bank</SelectItem>
-                <SelectItem value="fcmb">FCMB</SelectItem>
-                <SelectItem value="fidelity">Fidelity Bank</SelectItem>
-                <SelectItem value="stanbic">Stanbic IBTC</SelectItem>
+                {NIGERIAN_BANKS.map((bank) => (
+                  <SelectItem key={bank.code} value={bank.code}>
+                    {bank.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -104,21 +181,33 @@ export default function WithdrawFundsPage() {
             <Label htmlFor="accountNumber">Account Number</Label>
             <Input
               id="accountNumber"
-              name="accountNumber"
               placeholder="Enter 10-digit account number"
               maxLength={10}
-              required
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              disabled={walletLoading || !wallet}
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="accountName">Account Name</Label>
-            <Input
-              id="accountName"
-              name="accountName"
-              placeholder="Enter account name"
-              required
-            />
+            <div className="relative">
+              <Input
+                id="accountName"
+                value={resolvingAccount ? "Checking..." : accountName}
+                className="border-1 bg-gray-400"
+                disabled
+              />
+              {resolvingAccount && (
+                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+              {resolveError?.message && (
+                <p className="text-sm text-red-500">
+                  Failed to resolve account name. Please check your account
+                  number and selected bank.
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="border-t pt-4 mt-4">
@@ -126,23 +215,34 @@ export default function WithdrawFundsPage() {
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Amount</span>
-                <span>₦0.00</span>
+                <span>₦{numAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Processing Fee (₦100)
-                </span>
-                <span>₦100.00</span>
+                <span className="text-muted-foreground">Processing Fee</span>
+                <span>₦{processingFee}</span>
               </div>
               <div className="flex justify-between font-medium">
                 <span>Total to Receive</span>
-                <span>₦0.00</span>
+                <span>₦{totalToReceive.toLocaleString()}</span>
               </div>
             </div>
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full">Withdraw Funds</Button>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={walletLoading || !wallet}
+          >
+            {walletLoading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading...
+              </span>
+            ) : (
+              "Withdraw Funds"
+            )}
+          </Button>
         </CardFooter>
       </Card>
 

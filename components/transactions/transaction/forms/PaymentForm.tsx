@@ -1,24 +1,16 @@
-import { showErrorToast, showWarnToast } from "@/components/Toast";
+import { showErrorToast } from "@/components/Toast";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ProcessPaymentInput } from "@/types/input";
-import { PaymentGateway } from "@/types/payment";
+
 import { Transaction } from "@/types/transaction";
 import { Loader2 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent } from "react";
 
 interface PaymentFormProps {
   transaction: Transaction;
-  onSubmit: (data: ProcessPaymentInput) => void;
+  onSubmit: (transactionId: string) => void;
   loading: boolean;
 }
 
@@ -27,28 +19,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   onSubmit,
   loading,
 }) => {
-  const [paymentGateway, setPaymentGateway] = useState<PaymentGateway | null>(
-    null
-  );
-
-  const paymentGatewayOptions = Object.values(PaymentGateway).map((option) => ({
-    label: option,
-    value: option,
-  }));
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-
-    if (!paymentGateway) {
-      showWarnToast("Please select a payment method");
-      return;
-    }
-
     try {
-      onSubmit({
-        transactionId: transaction.id,
-        paymentGateway: paymentGateway,
-      });
+      onSubmit(transaction.id);
       // Optionally call showSuccessMessage if `onSubmit` is synchronous and successful here
     } catch (error) {
       console.log("Payment failed error", error);
@@ -68,35 +42,17 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             disabled
           />
         </div>
-
-        <div className="space-y-3">
-          <Label htmlFor="payment-gateway">Payment Gateway</Label>
-
-          <Select
-            value={paymentGateway ?? undefined}
-            onValueChange={(val: string) =>
-              setPaymentGateway(val as PaymentGateway)
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a payment method" />
-            </SelectTrigger>
-            <SelectContent>
-              {paymentGatewayOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       <DialogFooter>
-        <Button type="submit" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Complete Payment
-        </Button>
+        {transaction.isPaid ? (
+          <p className="text-green-600 font-medium">Payment Complete</p>
+        ) : (
+          <Button type="submit" disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Complete Payment
+          </Button>
+        )}
       </DialogFooter>
     </form>
   );
