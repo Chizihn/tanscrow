@@ -120,8 +120,14 @@ export function SignUpComponent() {
 
   // Form submit handlers
   async function onEmailSignUpSubmit(data: EmailSignupSchema) {
-    // Exclude confirmPassword from the data sent to backend
-    const { confirmPassword, ...formData } = data;
+    // Only send the fields needed by the backend (exclude confirmPassword)
+    const formData = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phoneNumber: "",
+      email: data.email,
+      password: data.password,
+    };
 
     signUpWithEmail({
       variables: { input: formData },
@@ -129,8 +135,14 @@ export function SignUpComponent() {
   }
 
   async function onPhoneSignUpSubmit(data: PhoneSignupSchema) {
-    // Exclude confirmPassword from the data sent to backend
-    const { confirmPassword, ...formData } = data;
+    // Only send the fields needed by the backend (exclude confirmPassword)
+    const formData = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phoneNumber: data.phoneNumber,
+      email: data.email,
+      password: data.password,
+    };
 
     signUpWithPhone({
       variables: { input: formData },
