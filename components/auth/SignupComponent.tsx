@@ -92,11 +92,11 @@ export function SignUpComponent() {
       onCompleted: (data) => {
         router.push("/dashboard");
 
-        storeAuthData(data.signppWithEmail);
+        storeAuthData(data.signUpWithEmail);
         toast.success("Account created successfully!");
       },
       onError: (error) => {
-        toast.error(error.message || "An error occured");
+        toast.error(error.message || "An error occurred");
       },
     }
   );
@@ -108,26 +108,32 @@ export function SignUpComponent() {
       onCompleted: (data) => {
         router.push("/dashboard");
 
-        storeAuthData(data.signppWithPhone); // Assuming response structure
+        storeAuthData(data.signUpWithPhone);
 
         toast.success("Account created successfully!");
       },
       onError: (error) => {
-        toast.error(error.message || "An error occured");
+        toast.error(error.message || "An error occurred");
       },
     }
   );
 
   // Form submit handlers
   async function onEmailSignUpSubmit(data: EmailSignupSchema) {
+    // Exclude confirmPassword from the data sent to backend
+    const { confirmPassword, ...formData } = data;
+
     signUpWithEmail({
-      variables: { input: data },
+      variables: { input: formData },
     });
   }
 
   async function onPhoneSignUpSubmit(data: PhoneSignupSchema) {
+    // Exclude confirmPassword from the data sent to backend
+    const { confirmPassword, ...formData } = data;
+
     signUpWithPhone({
-      variables: { input: data },
+      variables: { input: formData },
     });
   }
 
