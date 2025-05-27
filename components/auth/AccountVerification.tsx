@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,69 +34,44 @@ import { useAuthStore } from "@/store/auth-store";
 import { useMutation } from "@apollo/client";
 import { toast } from "sonner";
 import { User } from "@/types/user";
+import { useRouter } from "next/navigation";
+import { ProviderType } from "@/types/provider";
+import LoadingState from "../LoadingState";
 
-// Define verification types
-type VerificationType = "EMAIL" | "PHONE";
-
-// Define props interface
-interface AccountVerificationProps {
-  type?: VerificationType;
-  contactInfo?: string; // Email or phone number to verify
-}
-
-// Define schemas based on verification type
 const verifyTokenSchema = z.object({
   token: z.string().min(1, "Verification code is required"),
 });
 
-const resendEmailSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-});
-
-const resendPhoneSchema = z.object({
-  phone: z.string().min(10, "Please enter a valid phone number"),
-});
-
-export function AccountVerification({
-  type,
-  contactInfo,
-}: AccountVerificationProps) {
+export function AccountVerification() {
+  const router = useRouter();
   const user = useAuthStore((state) => state.user) as User;
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isResending, setIsResending] = useState<boolean>(false);
-  const [isVerified, setIsVerified] = useState<boolean>(false);
+  const { setUser } = useAuthStore();
 
-  // Determine verification type from props or user data
-  const verificationType: VerificationType =
-    type || (user?.providers[0]?.provider === "EMAIL" ? "EMAIL" : "PHONE");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
-  // Set up appropriate form based on verification type
+  const primaryProvider = user?.providers?.[0];
+  const isEmailVerification = primaryProvider?.provider === ProviderType.EMAIL;
+  const contactInfo = primaryProvider?.providerId || "";
+
+  // Wait until user and providers are loaded before rendering
+  useEffect(() => {
+    if (user) {
+      setPageLoading(false);
+    }
+  }, [user]);
+
   const verifyForm = useForm<z.infer<typeof verifyTokenSchema>>({
     resolver: zodResolver(verifyTokenSchema),
-    defaultValues: {
-      token: "",
-    },
+    defaultValues: { token: "" },
   });
 
-  const resendEmailForm = useForm<z.infer<typeof resendEmailSchema>>({
-    resolver: zodResolver(resendEmailSchema),
-    defaultValues: {
-      email: verificationType === "EMAIL" ? contactInfo || "" : "",
-    },
-  });
-
-  const resendPhoneForm = useForm<z.infer<typeof resendPhoneSchema>>({
-    resolver: zodResolver(resendPhoneSchema),
-    defaultValues: {
-      phone: verificationType === "PHONE" ? contactInfo || "" : "",
-    },
-  });
-
-  // Verify mutations
   const [verifyEmail] = useMutation(VERIFY_EMAIL, {
-    onCompleted: () => {
+    onCompleted: (data) => {
+      setUser({ ...user, verified: data?.verifyEmail });
       toast.success("Email verified successfully!");
-      setIsVerified(true);
+      router.push("/dashboard");
       setIsLoading(false);
     },
     onError: (error) => {
@@ -105,87 +80,79 @@ export function AccountVerification({
     },
   });
 
-  const [verifyPhone] = useMutation(
-    VERIFY_PHONE, // Changed from VERIFY_EMAIL to VERIFY_PHONE
-    {
-      onCompleted: () => {
-        toast.success("Phone number verified successfully!");
-        setIsVerified(true);
-        setIsLoading(false);
-      },
-      onError: (error) => {
-        toast.error(error.message || "Failed to verify phone number!");
-        setIsLoading(false);
-      },
-    }
-  );
+  const [verifyPhone] = useMutation(VERIFY_PHONE, {
+    onCompleted: (data) => {
+      setUser({ ...user, verified: data?.verifyPhoneOtp });
+      toast.success("Phone verified successfully!");
+      router.push("/dashboard");
+      setIsLoading(false);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to verify phone!");
+      setIsLoading(false);
+    },
+  });
 
-  // Resend mutations
   const [resendEmailVerify] = useMutation(RESEND_VERIFY_EMAIL, {
     onCompleted: () => {
-      toast.success("Email verification code sent!");
+      toast.success("Email verification code resent!");
       setIsResending(false);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to send email verification code!");
+      toast.error(error.message || "Failed to resend email code!");
       setIsResending(false);
     },
   });
 
   const [resendPhoneVerify] = useMutation(RESEND_VERIFY_PHONE, {
     onCompleted: () => {
-      toast.success("SMS verification code sent!");
+      toast.success("Phone verification code resent!");
       setIsResending(false);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to send SMS verification code!");
+      toast.error(error.message || "Failed to resend phone code!");
       setIsResending(false);
     },
   });
 
-  // Submit handlers
   async function onVerifySubmit(data: z.infer<typeof verifyTokenSchema>) {
     setIsLoading(true);
-    if (verificationType === "EMAIL") {
-      verifyEmail({
-        variables: data,
-      });
+    if (isEmailVerification) {
+      verifyEmail({ variables: { input: { token: data.token } } });
     } else {
-      verifyPhone({
-        variables: data,
-      });
+      verifyPhone({ variables: { input: { token: data.token } } });
     }
   }
 
-  async function onResendSubmit(
-    data: z.infer<typeof resendEmailSchema> | z.infer<typeof resendPhoneSchema>
-  ) {
+  async function onResendCode() {
     setIsResending(true);
-    if (verificationType === "EMAIL") {
-      resendEmailVerify({
-        variables: { email: "email" in data ? data.email : contactInfo },
-      });
+    if (isEmailVerification) {
+      resendEmailVerify({ variables: { input: { email: contactInfo } } });
     } else {
-      resendPhoneVerify({
-        variables: { phone: "phone" in data ? data.phone : contactInfo },
-      });
+      resendPhoneVerify({ variables: { Input: { phone: contactInfo } } });
     }
   }
 
-  // Success state
-  if (isVerified) {
+  // 🌀 Show loading while checking provider
+  if (pageLoading)
+    return (
+      <div className="h-screen w-full flex items-center justify-center">
+        <LoadingState message="Preparing verification..." />
+      </div>
+    );
+
+  // ❌ No verification required
+  if (
+    !primaryProvider ||
+    (primaryProvider.provider !== ProviderType.EMAIL &&
+      primaryProvider.provider !== ProviderType.PHONE)
+  ) {
     return (
       <Card className="w-full max-w-md mx-auto">
-        <CardHeader>
-          <div className="flex justify-center mb-4">
-            <CheckCircle className="h-16 w-16 text-success" />
-          </div>
-          <CardTitle className="text-center">
-            {verificationType === "EMAIL" ? "Email" : "Phone Number"} Verified
-          </CardTitle>
-          <CardDescription className="text-center">
-            Your {verificationType === "EMAIL" ? "email" : "phone number"} has
-            been successfully verified. You can now access all features.
+        <CardHeader className="text-center">
+          <CardTitle>No Verification Required</CardTitle>
+          <CardDescription>
+            No email or phone verification is needed for your account.
           </CardDescription>
         </CardHeader>
         <CardFooter>
@@ -197,18 +164,38 @@ export function AccountVerification({
     );
   }
 
-  // Verification form
+  // ✅ Already verified
+  if (user?.verified) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="text-center">
+          <CheckCircle className="w-16 h-16 mx-auto text-success mb-4" />
+          <CardTitle>
+            {isEmailVerification ? "Email" : "Phone"} Verified
+          </CardTitle>
+          <CardDescription>
+            Your {isEmailVerification ? "email" : "phone"} has been successfully
+            verified.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button asChild className="w-full">
+            <Link href="/dashboard">Continue to Dashboard</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  // 🔐 Verification form
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle>
-          Verify Your {verificationType === "EMAIL" ? "Email" : "Phone Number"}
+          Verify Your {isEmailVerification ? "Email" : "Phone"}
         </CardTitle>
         <CardDescription>
-          We sent a verification code to{" "}
-          {contactInfo ||
-            `your ${verificationType === "EMAIL" ? "email" : "phone number"}`}
-          . Please enter it below.
+          We sent a code to <strong>{contactInfo}</strong>. Enter it below.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -224,7 +211,7 @@ export function AccountVerification({
                 <FormItem>
                   <FormLabel>Verification Code</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter code" {...field} />
+                    <Input placeholder="Enter verification code" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -233,7 +220,7 @@ export function AccountVerification({
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading
                 ? "Verifying..."
-                : `Verify ${verificationType === "EMAIL" ? "Email" : "Phone"}`}
+                : `Verify ${isEmailVerification ? "email" : "number"}`}
             </Button>
           </form>
         </Form>
@@ -242,72 +229,14 @@ export function AccountVerification({
           <p className="text-sm text-muted-foreground">
             Didn&apos;t receive the code?
           </p>
-
-          {/* Conditional form rendering based on verification type */}
-          {verificationType === "EMAIL" ? (
-            <Form {...resendEmailForm}>
-              <form
-                onSubmit={resendEmailForm.handleSubmit(onResendSubmit)}
-                className="mt-2"
-              >
-                {!contactInfo && (
-                  <FormField
-                    control={resendEmailForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="mb-4">
-                        <FormControl>
-                          <Input placeholder="Enter your email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                <Button
-                  variant="outline"
-                  type="submit"
-                  className="mt-2"
-                  disabled={isResending}
-                >
-                  {isResending ? "Sending..." : "Resend Code"}
-                </Button>
-              </form>
-            </Form>
-          ) : (
-            <Form {...resendPhoneForm}>
-              <form
-                onSubmit={resendPhoneForm.handleSubmit(onResendSubmit)}
-                className="mt-2"
-              >
-                {!contactInfo && (
-                  <FormField
-                    control={resendPhoneForm.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem className="mb-4">
-                        <FormControl>
-                          <Input
-                            placeholder="Enter your phone number"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                <Button
-                  variant="outline"
-                  type="submit"
-                  className="mt-2"
-                  disabled={isResending}
-                >
-                  {isResending ? "Sending..." : "Resend Code"}
-                </Button>
-              </form>
-            </Form>
-          )}
+          <Button
+            variant="outline"
+            onClick={onResendCode}
+            className="mt-2"
+            disabled={isResending}
+          >
+            {isResending ? "Sending..." : "Resend Code"}
+          </Button>
         </div>
       </CardContent>
     </Card>

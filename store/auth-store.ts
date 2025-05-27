@@ -3,7 +3,7 @@ import { cookieStorage } from "@/utils/session";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-interface PersistAuth {
+export interface PersistAuth {
   user: Partial<User> | null;
   token: string | null;
   isAuthenticated: boolean;
@@ -11,7 +11,7 @@ interface PersistAuth {
   error: string | null;
 }
 
-interface AuthState extends PersistAuth {
+export interface AuthState extends PersistAuth {
   setUser: (user: Partial<User>) => void;
   setToken: (token: string | null) => void;
   setIsAuthenticated: (isAuthenticated: boolean) => void;
@@ -58,7 +58,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: "transcrow-auth", // name of the persisted store
+      name: "tanscrow-auth", // name of the persisted store
       storage: createJSONStorage(() => cookieStorage),
       partialize: (state) => ({
         user: state.user,

@@ -47,7 +47,10 @@ export function NotificationSheet({
           onClick={() => onOpenChange(true)}
         />
       </SheetTrigger>
-      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+      <SheetContent
+        side="right"
+        className="w-full max-w-[400px] sm:max-w-[540px]"
+      >
         <SheetHeader className="space-y-4">
           {!selectedNotification && <SheetTitle>Notifications</SheetTitle>}
         </SheetHeader>

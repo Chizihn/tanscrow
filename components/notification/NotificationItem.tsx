@@ -31,8 +31,10 @@ export function NotificationItem({
 
   return (
     <div
-      className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50 ${
-        !notification.isRead ? "bg-card border-blue-200" : "bg-background"
+      className={`relative p-4 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50 ${
+        !notification.isRead
+          ? "border-l-4 border-l-blue-500 bg-card "
+          : "bg-background"
       }`}
       onClick={() => onClick(notification)}
     >
@@ -43,7 +45,7 @@ export function NotificationItem({
               {notification.title}
             </h4>
             {!notification.isRead && (
-              <div className="h-2 w-2 rounded-full bg-blue-600" />
+              <div className="absolute top-3 right-3 h-2 w-2 rounded-full bg-blue-500" />
             )}
           </div>
           {/* <p className="text-sm text-muted-foreground line-clamp-2">

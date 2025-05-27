@@ -74,9 +74,9 @@ export function SignInComponent() {
     SIGN_IN_WITH_EMAIL,
     {
       onCompleted: (data) => {
-        router.push("/dashboard");
         toast.success("Welcome back!");
         storeAuthData(data.signinWithEmail);
+        router.push("/dashboard");
       },
       onError: (error) => {
         toast.error(error.message || "An error occured");
@@ -89,10 +89,9 @@ export function SignInComponent() {
     SIGN_IN_WITH_PHONE,
     {
       onCompleted: (data) => {
-        router.push("/dashboard");
-
         toast.success("Welcome back!");
         storeAuthData(data.signinWithPhone); // Assuming response structure
+        router.push("/dashboard");
       },
       onError: (error) => {
         toast.error(error.message || "An error occured");

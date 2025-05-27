@@ -17,7 +17,6 @@ export function Navbar() {
     { name: "Home", href: "/" },
     { name: "Features", href: "/#features" },
     { name: "How It Works", href: "/#how-it-works" },
-    { name: "Pricing", href: "/#pricing" },
     { name: "Contact", href: "/#contact" },
   ];
 
@@ -99,22 +98,24 @@ export function Navbar() {
                 ))}
               </ul>
               {isAuthenticated ? (
-                <Link
-                  href="/dashboard"
-                  className="px-4 py-2 text-center bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
+                <div className="w-full mt-8 mb-2">
+                  <Link
+                    href="/dashboard"
+                    className="px-4 py-2 text-center bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                </div>
               ) : (
                 <>
                   <div className="flex flex-col space-y-3 mt-6">
                     <Link
-                      href="/login"
+                      href="/signin"
                       className="px-4 py-2 text-center text-gray-700 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors border border-gray-300 dark:border-gray-700 rounded-md"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Log In
+                      Sign in
                     </Link>
                     <Link
                       href="/signup"

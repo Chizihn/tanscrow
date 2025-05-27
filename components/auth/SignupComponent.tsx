@@ -12,7 +12,7 @@ import {
   Lock,
   Mail,
   Phone,
-  User,
+  User as UserIcon,
 } from "lucide-react";
 import {
   Form,
@@ -42,6 +42,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
 import { cookieStorage } from "@/utils/session";
 import { useRouter } from "next/navigation";
+import { showErrorToast, showSuccessToast } from "../Toast";
 
 // Sign Up component for the sign-up page
 export function SignUpComponent() {
@@ -57,6 +58,7 @@ export function SignUpComponent() {
       firstName: "",
       lastName: "",
       email: "",
+      phoneNumber: "",
       password: "",
       confirmPassword: "",
     },
@@ -90,13 +92,13 @@ export function SignUpComponent() {
     SIGN_UP_WITH_EMAIL,
     {
       onCompleted: (data) => {
-        router.push("/dashboard");
+        showSuccessToast("Account created successfully!");
+        storeAuthData(data.signupWithEmail);
 
-        storeAuthData(data.signUpWithEmail);
-        toast.success("Account created successfully!");
+        router.push("/verify");
       },
       onError: (error) => {
-        toast.error(error.message || "An error occurred");
+        showErrorToast(error.message || "An error occurred");
       },
     }
   );
@@ -106,11 +108,10 @@ export function SignUpComponent() {
     SIGN_UP_WITH_PHONE,
     {
       onCompleted: (data) => {
-        router.push("/dashboard");
+        showSuccessToast("Account created successfully!");
+        storeAuthData(data.signupWithPhone);
 
-        storeAuthData(data.signUpWithPhone);
-
-        toast.success("Account created successfully!");
+        router.push("/verify");
       },
       onError: (error) => {
         toast.error(error.message || "An error occurred");
@@ -124,7 +125,7 @@ export function SignUpComponent() {
     const formData = {
       firstName: data.firstName,
       lastName: data.lastName,
-      phoneNumber: "",
+      phoneNumber: data.phoneNumber,
       email: data.email,
       password: data.password,
     };
@@ -193,7 +194,7 @@ export function SignUpComponent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          <User className="h-4 w-4" /> First Name
+                          <UserIcon className="h-4 w-4" /> First Name
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -237,6 +238,27 @@ export function SignUpComponent() {
                         <Input
                           placeholder="your.email@example.com"
                           type="email"
+                          className="bg-secondary/50"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={emailSignUpForm.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Phone className="h-4 w-4" /> Phone Number
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="+1234567890"
+                          type="tel"
                           className="bg-secondary/50"
                           {...field}
                         />
@@ -320,7 +342,7 @@ export function SignUpComponent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          <User className="h-4 w-4" /> First Name
+                          <UserIcon className="h-4 w-4" /> First Name
                         </FormLabel>
                         <FormControl>
                           <Input

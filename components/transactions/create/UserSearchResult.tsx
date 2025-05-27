@@ -26,7 +26,7 @@ export default function UserSearchResult({
 
   if (!user) {
     return (
-      <div className="mt-2 flex items-center gap-2 text-amber-500 bg-amber-50 p-2 rounded">
+      <div className="mt-2 flex items-center gap-2 text-amber-500 bg-card-50 p-2 rounded">
         <AlertCircle className="h-4 w-4" />
         <span className="text-sm">No user found with this identifier.</span>
       </div>

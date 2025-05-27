@@ -30,8 +30,8 @@ function AuthInitializer() {
     skip: !token,
     onCompleted: (data) => {
       if (data?.me) {
-        setIsAuthenticated(true);
         setUser(data.me);
+        setIsAuthenticated(true);
       }
     },
   });

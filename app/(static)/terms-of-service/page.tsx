@@ -66,10 +66,13 @@ export default function TermsOfService() {
                 4. Fees and Payments
               </h2>
               <p>
-                Tanscrow charges fees for its services as outlined on our
-                pricing page. We reserve the right to change our fees at any
-                time with notice to our users. All fees are non-refundable
-                unless otherwise specified.
+                Tanscrow charges a service fee for each transaction processed
+                through our platform. This fee is calculated as a percentage of
+                the transaction value and is deducted from the transaction
+                amount. The exact fee percentage may vary based on the
+                transaction size and complexity. We reserve the right to change
+                our fees at any time with notice to our users. All fees are
+                non-refundable unless otherwise specified.
               </p>
 
               <h2 className="text-2xl font-semibold mt-8 mb-4">

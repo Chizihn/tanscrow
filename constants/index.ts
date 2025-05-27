@@ -1,5 +1,7 @@
 export const API_URL =
-  process.env.NEXT_PUBLIC_API || "http://localhost:5000/graphql";
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:5000/graphql"
+    : process.env.NEXT_PUBLIC_API;
 
 export const DEFAULT_USER_IMG = "/images/user.webp";
 
