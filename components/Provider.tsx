@@ -34,8 +34,9 @@ function ApolloAuthWrapper({ children }: { children: React.ReactNode }) {
     if (isTokenExpired(token)) {
       // Token expired - logout and redirect
       console.log("Token expired, logging out...");
+      showErrorToast("Session expired. Please sign in again.");
       logout();
-      router.push("/signin");
+      router.replace("/signin");
       setIsInitializing(false);
       setShouldSkipQuery(true);
       return;
@@ -47,7 +48,6 @@ function ApolloAuthWrapper({ children }: { children: React.ReactNode }) {
 
   const { loading } = useQuery<{ me: User }>(ME, {
     fetchPolicy: "network-only",
-    notifyOnNetworkStatusChange: true,
     skip: shouldSkipQuery,
     onCompleted: (data) => {
       if (data?.me) {

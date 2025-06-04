@@ -8,20 +8,17 @@ import {
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 
-const token = getToken();
-
-// 1. HTTP link
 const httpLink = createHttpLink({
   uri: API_URL,
   credentials: "include",
 });
 
-// 2. Auth link to inject token
 const authLink = setContext((_, { headers }) => {
+  const token = getToken();
   return {
     headers: {
       ...headers,
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(token && { Authorization: `Bearer ${token as string}` }),
     },
   };
 });

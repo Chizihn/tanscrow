@@ -68,8 +68,8 @@ export function AccountVerification() {
   });
 
   const [verifyEmail] = useMutation(VERIFY_EMAIL, {
-    onCompleted: (data) => {
-      setUser({ ...user, verified: data?.verifyEmail });
+    onCompleted: () => {
+      setUser({ ...user, verified: true });
       toast.success("Email verified successfully!");
       router.push("/dashboard");
       setIsLoading(false);

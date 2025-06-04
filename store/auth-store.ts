@@ -13,7 +13,7 @@ export interface PersistAuth {
 }
 
 export interface AuthState extends PersistAuth {
-  setUser: (user: Partial<User>) => void;
+  setUser: (user: Partial<User> | null) => void;
   setToken: (token: string | null) => void;
   setIsAuthenticated: (isAuthenticated: boolean) => void;
   setLoading: (loading: boolean) => void;
