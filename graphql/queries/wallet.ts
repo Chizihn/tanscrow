@@ -41,3 +41,22 @@ export const RESOLVE_ACCOUNT_DETAILS = gql`
     }
   }
 `;
+
+export const GET_BANK_WITHDRAWALS = gql`
+  query GetBankWithdrawals {
+    getBankWithdrawals {
+      id
+      bankName
+      accountNumber
+      accountName
+      bankCode
+      amount
+      currency
+      reference
+      status
+      failureReason
+      createdAt
+      updatedAt
+    }
+  }
+`;

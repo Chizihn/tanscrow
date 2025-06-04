@@ -39,3 +39,11 @@ export const UPDATE_PROFILE = gql`
     }
   }
 `;
+
+export const UPDATE_PROFILE_IMG = gql`
+  mutation UpdateProfileImage($profileImageUrl: String!) {
+    updateProfileImage(profileImageUrl: $profileImageUrl) {
+      profileImageUrl
+    }
+  }
+`;

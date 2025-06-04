@@ -49,7 +49,7 @@ export function NotificationSheet({
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full max-w-[400px] sm:max-w-[540px]"
+        className="w-full max-w-[340px] sm:max-w-[440px]"
       >
         <SheetHeader className="space-y-4">
           {!selectedNotification && <SheetTitle>Notifications</SheetTitle>}

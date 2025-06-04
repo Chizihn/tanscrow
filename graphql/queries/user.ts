@@ -87,7 +87,7 @@ export const GET_USERS = gql`
 `;
 
 export const SEARCH_USER = gql`
-  query SearchUser($input: String!) {
+  query SearchUser($input: SearchUserInput!) {
     searchUser(input: $input) {
       id
       email
@@ -96,6 +96,60 @@ export const SEARCH_USER = gql`
       phoneNumber
       profileImageUrl
       verified
+    }
+  }
+`;
+
+export const GET_USER_DASHBOARD_SUMMARY = gql`
+  query GetUserDashboardSummary($dateRange: ReportDateRangeInput) {
+    userDashboardSummary(dateRange: $dateRange) {
+      totalTransactions
+      activeTransactions
+      completedTransactions
+      disputedTransactions
+      canceledTransactions
+      totalAmount
+      totalAmountAsBuyer
+      totalAmountAsSeller
+      totalFeesPaid
+      averageTransactionAmount
+      transactionsAsBuyer
+      transactionsAsSeller
+      statusBreakdown {
+        status
+        count
+      }
+      recentTransactions {
+        id
+        title
+        amount
+        status
+        createdAt
+        role
+        counterparty
+      }
+      dateRange {
+        startDate
+        endDate
+      }
+    }
+  }
+`;
+
+export const GET_USER_WALLET_SUMMARY = gql`
+  query GetUserWalletSummary {
+    userWalletSummary {
+      availableBalance
+      escrowBalance
+      totalBalance
+      currency
+      recentTransactions {
+        id
+        type
+        amount
+        description
+        createdAt
+      }
     }
   }
 `;

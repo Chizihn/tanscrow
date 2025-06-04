@@ -12,6 +12,7 @@ import { VerificationTab } from "@/components/profile/VerificationTab";
 import { SecurityTab } from "@/components/profile/SecurityTab";
 import { AccountTab } from "@/components/profile/AccountTab";
 import { MY_VERIFICATION_DOCUMENTS } from "@/graphql/queries/verification";
+import PageHeader from "@/components/PageHeader";
 
 export default function ProfilePage() {
   const user = useAuthStore((state) => state.user) as User;
@@ -35,13 +36,10 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Profile</h2>
-        <p className="text-muted-foreground">
-          Manage your account information and verification
-        </p>
-      </div>
-
+      <PageHeader
+        title="Profile"
+        description="Manage your account information and verification"
+      />
       <Tabs defaultValue="personal">
         <TabsList>
           <TabsTrigger value="personal">Personal Information</TabsTrigger>

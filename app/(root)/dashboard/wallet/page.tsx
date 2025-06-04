@@ -10,6 +10,7 @@ import TransactionHistory from "@/components/wallet/WalletTransactions";
 import { showErrorToast, showSuccessToast } from "@/components/Toast";
 import { CreateWalletInput } from "@/types/input";
 import { PaymentCurrency } from "@/types/payment";
+import PageHeader from "@/components/PageHeader";
 
 export interface WalletQueryResult {
   wallet: Wallet | null;
@@ -19,12 +20,29 @@ interface TransactionsQueryResult {
   walletTransactions: WalletTransaction[];
 }
 
+// export interface BankWithdrawals {
+//   readonly id: string;
+//   bankName: string;
+//   accountNumber: string;
+//   accountName: string;
+//   bankCode: string;
+//   amount: string;
+//   currency: string;
+//   reference: string;
+//   status: string;
+//   failureReason: string;
+//   createdAt: string;
+//   updatedAt: string;
+// }
 export default function WalletPage() {
   // Fetch wallet data
-  const { data, loading, error } = useQuery<WalletQueryResult>(GET_WALLET, {
-    fetchPolicy: "network-only",
-    notifyOnNetworkStatusChange: true,
-  });
+  const { data, loading, error, refetch } = useQuery<WalletQueryResult>(
+    GET_WALLET,
+    {
+      fetchPolicy: "network-only",
+      notifyOnNetworkStatusChange: true,
+    }
+  );
 
   const wallet = data?.wallet ?? null;
 
@@ -48,6 +66,7 @@ export default function WalletPage() {
     {
       onCompleted: () => {
         showSuccessToast("Wallet created successfully!");
+        refetch();
       },
       onError: (error) => {
         showErrorToast(error.message || "Failed to create wallet!");
@@ -105,14 +124,10 @@ export default function WalletPage() {
   // Wallet exists state
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Wallet</h2>
-          <p className="text-muted-foreground">
-            Manage your funds and transactions
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Wallet"
+        description="Manage your funds and transactions"
+      />
 
       <WalletBalance wallet={wallet} />
       <TransactionHistory

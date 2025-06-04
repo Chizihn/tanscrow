@@ -33,7 +33,7 @@ export function useNotifications() {
       onCompleted: (data) => {
         if (data?.markNotificationRead) {
           markNotificationAsRead(data.markNotificationRead.id, true);
-          showSuccessToast("Notification marked as read");
+          // showSuccessToast("Notification marked as read");
         }
       },
       onError: (error) => {

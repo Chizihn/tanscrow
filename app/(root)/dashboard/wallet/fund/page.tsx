@@ -14,13 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, CreditCard, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { CreditCard, Loader2 } from "lucide-react";
 import { PaymentCurrency, PaymentGateway } from "@/types/payment";
 import { FUND_WALLET } from "@/graphql/mutations/wallet";
 import { showErrorToast, showSuccessToast } from "@/components/Toast";
 import { capitalizeFirstChar } from "@/utils";
 import { FundWalletInput } from "@/types/wallet";
+import PageRouter from "@/components/PageRouter";
+import PageHeader from "@/components/PageHeader";
 
 export default function FundWalletPage() {
   const [amount, setAmount] = useState("");
@@ -40,10 +41,14 @@ export default function FundWalletPage() {
     },
   });
 
-  const amountNumber = Number(amount);
+  const amountNumber = parseFloat(amount) || 0;
   const isValidAmount = !isNaN(amountNumber) && amountNumber >= 1000;
-  const processingFee = isValidAmount ? amountNumber * 0.015 : 0;
-  const total = isValidAmount ? amountNumber + processingFee : 0;
+  const processingFee = isValidAmount
+    ? Math.round(amountNumber * 0.015 * 100) / 100
+    : 0;
+  const total = isValidAmount
+    ? Math.round((amountNumber + processingFee) * 100) / 100
+    : 0;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -61,16 +66,16 @@ export default function FundWalletPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/wallet">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Fund Wallet</h2>
-          <p className="text-muted-foreground">Add funds to your wallet</p>
-        </div>
+      <div className="space-y-3">
+        <PageRouter
+          parentLabel="Back to Wallet"
+          parentPath="/dashboard/wallet"
+        />
+
+        <PageHeader
+          title="Fund Wallet"
+          description="Add funds to your wallet"
+        />
       </div>
 
       {/* Funding Card */}

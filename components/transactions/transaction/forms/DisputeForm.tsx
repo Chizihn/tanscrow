@@ -36,28 +36,27 @@ const DisputeForm: React.FC<DisputeFormProps> = ({
     onSubmit({
       description,
       reason,
-
       transactionId: transaction.id,
     });
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="space-y-4 mb-6">
-        <div className="gap-4">
+      <div className="space-y-8 mb-6">
+        <div className="space-y-3">
           <Label htmlFor="reason">Dispute Details</Label>
           <Input
             id="reason"
             placeholder="Please provide a description"
             value={reason}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => setReason(e.target.value)}
           />
 
           <Textarea
             id="reason"
             placeholder="Please provide details about the issue you're experiencing"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             rows={4}
           />
         </div>

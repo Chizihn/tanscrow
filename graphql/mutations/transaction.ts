@@ -296,3 +296,21 @@ export const VERIFY_PAYMENT = gql`
     verifyPayment(gateway: $gateway, reference: $reference)
   }
 `;
+
+export const GET_TRANSACTION_REPORT = gql`
+  query TransactionReport($dateRange: ReportDateRangeInput!) {
+    transactionReport(dateRange: $dateRange) {
+      totalTransactions
+      totalAmount
+      totalEscrowFees
+      completedTransactions
+      canceledTransactions
+      disputedTransactions
+      averageTransactionAmount
+      statusBreakdown {
+        status
+        count
+      }
+    }
+  }
+`;

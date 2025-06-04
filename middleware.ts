@@ -14,7 +14,7 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Define protected routes
-  const protectedRoutes = ["/dashboard", "/payment", "/verify"];
+  const protectedRoutes = ["/dashboard", "/verify"];
 
   // Check if the current path starts with any protected route
   const isProtectedRoute = protectedRoutes.some((route) =>
@@ -41,5 +41,5 @@ export function middleware(request: NextRequest) {
 
 // Configure which paths the middleware should run on
 export const config = {
-  matcher: ["/dashboard/:path*", "/payment/:path*", "/verify/:path*"],
+  matcher: ["/dashboard/:path*", "/verify/:path*"],
 };

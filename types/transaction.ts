@@ -92,3 +92,19 @@ export interface Review {
   reviewer: Partial<User>;
   seller: Partial<User>;
 }
+
+export interface TransactionStatusBreakdown {
+  count: number;
+  status: TransactionStatus;
+}
+
+export interface TransactionReport {
+  totalTransactions: number;
+  totalAmount: number;
+  totalEscrowFees: number;
+  completedTransactions: number;
+  canceledTransactions: number;
+  disputedTransactions: number;
+  averageTransactionAmount: number;
+  statusBreakdown: TransactionStatusBreakdown[];
+}

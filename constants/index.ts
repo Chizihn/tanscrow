@@ -3,6 +3,16 @@ export const API_URL =
     ? "http://localhost:5000/graphql"
     : process.env.NEXT_PUBLIC_API;
 
+export const API_URL_2 =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:5000"
+    : process.env.NEXT_PUBLIC_API_2;
+
+export const APP_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : process.env.NEXT_PUBLIC_APP_URL;
+
 export const DEFAULT_USER_IMG = "/images/user.webp";
 
 export const NIGERIAN_BANKS = [

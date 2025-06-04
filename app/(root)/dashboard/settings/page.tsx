@@ -16,6 +16,7 @@ import {
   NotificationType,
 } from "@/types/notification";
 import { ThemeToggle } from "@/components/theme-toggle";
+import PageHeader from "@/components/PageHeader";
 
 export default function SettingsPage() {
   // Mock data - would be fetched from API in a real implementation
@@ -34,10 +35,10 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-        <p className="text-muted-foreground">Manage your account preferences</p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Manage your account preferences"
+      />
 
       <Tabs defaultValue="notifications">
         <TabsList>

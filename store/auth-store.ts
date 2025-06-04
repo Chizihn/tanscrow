@@ -1,3 +1,4 @@
+import { apolloClient } from "@/lib/apollo-client";
 import { User } from "@/types/user";
 import { cookieStorage } from "@/utils/session";
 import { create } from "zustand";
@@ -47,7 +48,41 @@ export const useAuthStore = create<AuthState>()(
       setError: (error) => set({ error }),
 
       logout: () => {
+        // Clear cookies using multiple methods to ensure they're removed
+
+        // Method 1: Using your cookie storage utility
         cookieStorage.removeItem("token");
+        cookieStorage.removeItem("tanscrow-auth");
+
+        // Method 2: Direct cookie clearing (more reliable)
+        // Clear with different path/domain combinations to ensure removal
+        const cookiesToClear = ["token", "tanscrow-auth"];
+
+        cookiesToClear.forEach((cookieName) => {
+          // Clear for current path
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+
+          // Clear for root domain
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+
+          // Clear for parent domain (in case of subdomain)
+          const domain = window.location.hostname
+            .split(".")
+            .slice(-2)
+            .join(".");
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${domain};`;
+        });
+
+        // Method 3: Clear localStorage as backup
+        try {
+          localStorage.removeItem("token");
+          localStorage.removeItem("tanscrow-auth");
+        } catch (e) {
+          // localStorage might not be available
+          console.warn("Could not clear localStorage:", e);
+        }
+
+        // Update store state
         set({
           user: null,
           token: null,
@@ -55,6 +90,8 @@ export const useAuthStore = create<AuthState>()(
           loading: false,
           error: null,
         });
+
+        apolloClient.clearStore();
       },
     }),
     {

@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowRight, Clock } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import { formatDate } from "@/utils";
 
 interface DisputeCardProps {
   dispute: Dispute;
@@ -22,7 +23,7 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ dispute }) => {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <h3 className="font-semibold">{dispute.transaction.title}</h3>
+              <h3 className="font-semibold">{dispute.transaction?.title}</h3>
               <Badge variant="secondary">{dispute.status}</Badge>
             </div>
             <p className="text-sm text-muted-foreground line-clamp-1">
@@ -30,15 +31,13 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ dispute }) => {
             </p>
             <div className="flex items-center gap-2 text-sm">
               <Clock className="h-3 w-3" />
-              <span>Opened on {dispute.createdAt.toLocaleDateString()}</span>
+              <span>Opened on {formatDate(dispute.createdAt)}</span>
             </div>
           </div>
           <div className="flex flex-col md:items-end gap-1">
-            <p className="font-semibold">
-              ₦{dispute.transaction.amount?.toLocaleString()}
-            </p>
+            <p className="font-semibold">₦{dispute.transaction?.amount}</p>
             <p className="text-xs text-muted-foreground">
-              Transaction: {dispute.transaction.transactionCode}
+              Transaction: {dispute.transaction?.transactionCode}
             </p>
             <Button variant="outline" size="sm" asChild>
               <Link href={`/dashboard/disputes/${dispute.id}`}>

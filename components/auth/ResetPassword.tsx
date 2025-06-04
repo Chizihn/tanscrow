@@ -28,7 +28,7 @@ import { AuthCard } from "./AuthCard";
 import { RESET_PASSWORD } from "@/graphql/mutations/auth";
 import { useMutation } from "@apollo/client";
 import { toast } from "sonner";
-import { token } from "@/utils/session";
+import { getToken } from "@/utils/session";
 
 const resetPasswordSchema = z
   .object({
@@ -43,6 +43,7 @@ const resetPasswordSchema = z
 export function ResetPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [isReset, setIsReset] = useState(false);
+  const token = getToken();
 
   // Set up the reset password mutation
   const [resetPassword] = useMutation(RESET_PASSWORD, {

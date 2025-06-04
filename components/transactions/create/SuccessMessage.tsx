@@ -11,7 +11,7 @@ interface SuccessMessageProps {
 
 export default function SuccessMessage({ transaction }: SuccessMessageProps) {
   return (
-    <div className="text-center py-12 space-y-6">
+    <div className="w-full text-center py-12 space-y-6">
       <div className="flex justify-center">
         <div className="rounded-full bg-green-100 p-3">
           <CheckCircle className="h-12 w-12 text-green-600" />

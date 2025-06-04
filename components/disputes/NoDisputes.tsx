@@ -10,8 +10,10 @@ const NoDisputes = () => {
           <FileText className="h-6 w-6 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-medium mb-2">No disputes found</h3>
-        <p className="text-muted-foreground mb-4">
-          You don&apos;t have any disputes at the moment.
+        <p className="text-muted-foreground mb-4 max-w-md">
+          You currently have no disputes in this category. Disputes typically
+          arise when there&apos;s a problem with a transaction. We&apos;ll show
+          them here when there are any.
         </p>
       </CardContent>
     </Card>

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-
 import {
   Card,
   CardContent,
@@ -22,13 +21,25 @@ import {
 } from "@/components/ui/select";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useLazyQuery, useQuery } from "@apollo/client";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { NIGERIAN_BANKS } from "@/constants";
 import { GET_WALLET, RESOLVE_ACCOUNT_DETAILS } from "@/graphql/queries/wallet";
 import PageRouter from "@/components/PageRouter";
 import { WalletQueryResult } from "../page";
 import ErrorState from "@/components/ErrorState";
-import { showSuccessToast } from "@/components/Toast";
+import { showErrorToast, showSuccessToast } from "@/components/Toast";
+import PageHeader from "@/components/PageHeader";
+import { WITHDRAW_TO_NIGERIAN_BANK } from "@/graphql/mutations/wallet";
+import { PaymentCurrency } from "@/types/payment";
+
+interface WithdrawInput {
+  accountName: string;
+  accountNumber: string;
+  amount: number;
+  bankCode: string;
+  bankName: string;
+  currency: PaymentCurrency;
+}
 
 export default function WithdrawFundsPage() {
   const [bankCode, setBankCode] = useState<string>("");
@@ -36,7 +47,6 @@ export default function WithdrawFundsPage() {
   const [accountName, setAccountName] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
 
-  // Fetch wallet data
   const {
     data,
     loading: walletLoading,
@@ -48,7 +58,6 @@ export default function WithdrawFundsPage() {
 
   const wallet = data?.wallet ?? null;
 
-  // Simple lazy query for resolving bank account details
   const [
     resolveAccountDetails,
     { loading: resolvingAccount, error: resolveError },
@@ -59,13 +68,29 @@ export default function WithdrawFundsPage() {
       }
     },
     onError: (error) => {
-      showSuccessToast(error.message);
+      showErrorToast(error.message);
       setAccountName("");
     },
     fetchPolicy: "no-cache",
   });
 
-  // Simple effect for account resolution
+  const [withdraw, { loading: withdrawLoading }] = useMutation(
+    WITHDRAW_TO_NIGERIAN_BANK,
+    {
+      onCompleted: () => {
+        showSuccessToast("Withdrawal initiated successfully.");
+        // Optionally reset form
+        setBankCode("");
+        setAccountNumber("");
+        setAccountName("");
+        setAmount("");
+      },
+      onError: (error) => {
+        showErrorToast(error.message);
+      },
+    }
+  );
+
   useEffect(() => {
     if (accountNumber.length === 10 && bankCode) {
       setAccountName("");
@@ -79,15 +104,48 @@ export default function WithdrawFundsPage() {
     }
   }, [accountNumber, bankCode, resolveAccountDetails]);
 
-  // Simple calculations
+  const handleMakeWithdraw = () => {
+    const numAmount = Number(amount);
+    if (numAmount < 5000) {
+      showErrorToast("Minimum withdrawal amount is ₦5,000.");
+      return;
+    }
+
+    const bank = NIGERIAN_BANKS.find((b) => b.code === bankCode);
+    if (!bank) {
+      showErrorToast("Invalid bank selected.");
+      return;
+    }
+
+    const input: WithdrawInput = {
+      accountName,
+      accountNumber,
+      amount: numAmount,
+      bankCode,
+      bankName: bank.name,
+      currency: PaymentCurrency.NGN,
+    };
+
+    withdraw({
+      variables: { input },
+    });
+  };
+
   const numAmount = Number(amount || 0);
   const processingFee = 100;
   const totalToReceive = Math.max(numAmount - processingFee, 0);
 
-  // Show error state if wallet query failed
   if (walletError) {
     return <ErrorState message={walletError.message} />;
   }
+
+  const isFormValid =
+    !!accountName &&
+    !!accountNumber &&
+    !!bankCode &&
+    !!wallet &&
+    numAmount >= 5000 &&
+    numAmount <= wallet.balance;
 
   return (
     <div className="space-y-6">
@@ -98,14 +156,10 @@ export default function WithdrawFundsPage() {
               parentLabel="Back to Wallet"
               parentPath="/dashboard/wallet"
             />
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">
-                Withdraw Funds
-              </h2>
-              <p className="text-muted-foreground">
-                Transfer funds to your bank account
-              </p>
-            </div>
+            <PageHeader
+              title="Withdraw Funds"
+              description="Transfer funds to your bank account"
+            />
           </div>
         </div>
       </div>
@@ -163,6 +217,7 @@ export default function WithdrawFundsPage() {
             <Select
               onValueChange={setBankCode}
               disabled={walletLoading || !wallet}
+              value={bankCode}
             >
               <SelectTrigger id="bank">
                 <SelectValue placeholder="Select bank" />
@@ -230,14 +285,15 @@ export default function WithdrawFundsPage() {
         </CardContent>
         <CardFooter>
           <Button
-            type="submit"
+            type="button"
             className="w-full"
-            disabled={walletLoading || !wallet}
+            onClick={handleMakeWithdraw}
+            disabled={!isFormValid || withdrawLoading}
           >
-            {walletLoading ? (
+            {withdrawLoading ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Loading...
+                Processing...
               </span>
             ) : (
               "Withdraw Funds"

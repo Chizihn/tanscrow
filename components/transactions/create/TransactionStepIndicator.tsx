@@ -40,7 +40,7 @@ export default function TransactionStepIndicator({
         <span
           className={currentStep >= 2 ? "font-medium" : "text-muted-foreground"}
         >
-          Counterparty
+          Party
         </span>
       </div>
       <div className="h-0.5 flex-1 bg-muted mx-2" />

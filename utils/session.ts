@@ -31,7 +31,10 @@ export const cookieStorage = {
 
 export const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID as string;
 
-export const token = cookieStorage.getItem("token") || "";
+// utils/session.ts
+export function getToken(): string {
+  return cookieStorage.getItem("token") || "";
+}
 
 export const isTokenExpired = (token: string): boolean => {
   try {

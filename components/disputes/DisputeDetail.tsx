@@ -21,15 +21,18 @@ import { useQuery } from "@apollo/client";
 import PageRouter from "../PageRouter";
 import ErrorState from "../ErrorState";
 import LoadingState from "../LoadingState";
+import { useAuthStore } from "@/store/auth-store";
+import { User } from "@/types/user";
+import { formatDate } from "@/utils";
 
 interface Props {
   id: string;
 }
 const DisputeDetail: React.FC<Props> = ({ id }) => {
+  const user = (useAuthStore((state) => state.user) as User) || {};
   const { data, loading, error } = useQuery<{ dispute: Dispute }>(GET_DISPUTE, {
-    variables: { id },
-    fetchPolicy: "cache-and-network",
-    nextFetchPolicy: "cache-first",
+    variables: { disputeId: id },
+    fetchPolicy: "network-only",
     notifyOnNetworkStatusChange: true,
     skip: !id,
     onCompleted: (data) => {
@@ -41,19 +44,12 @@ const DisputeDetail: React.FC<Props> = ({ id }) => {
 
   const dispute = data?.dispute ?? null;
 
-  const user = {
-    id: "123", // Assuming current user is the buyer/initiator
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-  };
-
   if (loading)
     return (
       <>
         <PageRouter
-          parentPath="/dashboard/transactions"
-          parentLabel="Back to Transactions"
+          parentPath="/dashboard/disputes"
+          parentLabel="Back to Disputes"
         />
         <LoadingState message="Loading dispute details..." />
       </>
@@ -75,7 +71,7 @@ const DisputeDetail: React.FC<Props> = ({ id }) => {
           parentPath="/dashboard/disputes"
           parentLabel="Back to Disputes"
         />
-        <ErrorState message="Transaction not found" />
+        <ErrorState message="Dispute not found" />
       </>
     );
 
@@ -87,8 +83,8 @@ const DisputeDetail: React.FC<Props> = ({ id }) => {
     <div className="space-y-6">
       <div className="space-y-3">
         <PageRouter
-          parentPath="/dashboard/transactions"
-          parentLabel="Back to Transactions"
+          parentPath="/dashboard/disputes"
+          parentLabel="Back to Disputes"
         />
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -107,7 +103,7 @@ const DisputeDetail: React.FC<Props> = ({ id }) => {
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" asChild>
-              <Link href={`/dashboard/transactions/${dispute.transactionId}`}>
+              <Link href={`/dashboard/transactions/${dispute.transaction?.id}`}>
                 View Transaction
               </Link>
             </Button>
@@ -157,16 +153,14 @@ const DisputeDetail: React.FC<Props> = ({ id }) => {
                 </h4>
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  <span>{dispute.createdAt.toLocaleDateString()}</span>
+                  <span>{formatDate(dispute.createdAt)}</span>
                 </div>
               </div>
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground">
                   Transaction Amount
                 </h4>
-                <p className="font-semibold">
-                  ₦{dispute.transaction?.amount?.toLocaleString()}
-                </p>
+                <p className="font-semibold">₦{dispute.transaction?.amount}</p>
               </div>
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground">
@@ -228,7 +222,7 @@ const DisputeDetail: React.FC<Props> = ({ id }) => {
                     Dispute has been initiated
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {dispute.createdAt.toLocaleString()}
+                    {formatDate(dispute.createdAt)}
                   </p>
                 </div>
               </div>
@@ -241,7 +235,7 @@ const DisputeDetail: React.FC<Props> = ({ id }) => {
                       A moderator is reviewing the dispute
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {dispute.updatedAt.toLocaleString()}
+                      {formatDate(dispute.updatedAt)}
                     </p>
                   </div>
                 </div>
@@ -291,7 +285,7 @@ const DisputeDetail: React.FC<Props> = ({ id }) => {
                         : evidence.submittedBy === dispute.transaction.buyer?.id
                         ? "buyer"
                         : "seller"}{" "}
-                      on {evidence.createdAt?.toLocaleDateString()}
+                      on {formatDate(evidence?.createdAt as Date)}
                     </p>
                   </div>
                   <Button variant="outline" size="sm">

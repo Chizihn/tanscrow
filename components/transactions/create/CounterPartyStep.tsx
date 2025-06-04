@@ -1,4 +1,3 @@
-// src/components/transactions/create/CounterpartyStep.tsx
 import React, { useState, useRef } from "react";
 import {
   Card,
@@ -56,6 +55,7 @@ export default function CounterpartyStep({
   const [localIdentifier, setLocalIdentifier] = useState(
     formData.counterpartyIdentifier || ""
   );
+  const [hasSearched, setHasSearched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const validateStep2 = () => {
@@ -65,21 +65,23 @@ export default function CounterpartyStep({
   };
 
   const handleSearch = () => {
-    if (localIdentifier) {
+    if (localIdentifier.trim()) {
+      setHasSearched(true);
       // Update the form data with the local identifier
       const event = {
         target: {
           name: "counterpartyIdentifier",
-          value: localIdentifier,
+          value: localIdentifier.trim(),
         },
       } as React.ChangeEvent<HTMLInputElement>;
 
       handleInputChange(event);
 
       // Trigger the search
-      searchCounterparty(localIdentifier);
+      searchCounterparty(localIdentifier.trim());
     } else {
       setCounterParty(null);
+      setHasSearched(false);
     }
   };
 
@@ -92,9 +94,10 @@ export default function CounterpartyStep({
 
   const handleLocalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalIdentifier(e.target.value);
-    // If user clears the input, reset counterparty
+    // If user clears the input, reset everything
     if (!e.target.value) {
       setCounterParty(null);
+      setHasSearched(false);
       const event = {
         target: {
           name: "counterpartyIdentifier",
@@ -103,6 +106,20 @@ export default function CounterpartyStep({
       } as React.ChangeEvent<HTMLInputElement>;
       handleInputChange(event);
     }
+  };
+
+  const handleClearUser = () => {
+    setCounterParty(null);
+    setLocalIdentifier("");
+    setHasSearched(false);
+    const event = {
+      target: {
+        name: "counterpartyIdentifier",
+        value: "",
+      },
+    } as React.ChangeEvent<HTMLInputElement>;
+    handleInputChange(event);
+    inputRef.current?.focus();
   };
 
   return (
@@ -130,7 +147,12 @@ export default function CounterpartyStep({
               ref={inputRef}
               required
             />
-            <Button type="button" onClick={handleSearch} variant="secondary">
+            <Button
+              type="button"
+              onClick={handleSearch}
+              variant="secondary"
+              disabled={loading}
+            >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -138,15 +160,20 @@ export default function CounterpartyStep({
               )}
             </Button>
           </div>
-          {!counterParty && (
+          {!counterParty && !hasSearched && (
             <p className="text-sm text-muted-foreground">
               Press Enter or click Search button after typing the complete
               identifier
             </p>
           )}
 
-          {formData.counterpartyIdentifier && !loading && (
-            <UserSearchResult user={counterParty} error={error} />
+          {hasSearched && (
+            <UserSearchResult
+              user={counterParty}
+              error={error}
+              loading={loading}
+              onClearUser={handleClearUser}
+            />
           )}
         </div>
 

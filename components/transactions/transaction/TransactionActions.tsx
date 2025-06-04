@@ -16,6 +16,7 @@ import { Transaction } from "@/types/transaction";
 import {
   CANCEL_TRANSACTION,
   CONFIRM_DELIVERY,
+  OPEN_DISPUTE,
   PROCESS_PAYMENT,
   REQUEST_REFUND,
   UPDATE_DELIVERY,
@@ -35,6 +36,7 @@ import RequestRefundForm from "./forms/PaymentRefundForm";
 import DisputeForm from "./forms/DisputeForm";
 import { showErrorToast, showSuccessToast } from "@/components/Toast";
 import { GET_TRANSACTION } from "@/graphql/queries/transaction";
+import Link from "next/link";
 
 // Define the possible action types
 
@@ -73,7 +75,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
       refetchQueries: [
         {
           query: GET_TRANSACTION,
-          variables: { id: transaction.id },
+          variables: { transactionId: transaction.id },
         },
       ],
       onError: (error) => {
@@ -90,7 +92,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
       refetchQueries: [
         {
           query: GET_TRANSACTION,
-          variables: { id: transaction.id },
+          variables: { transactionId: transaction.id },
         },
       ],
       onError: (error) => setError(error.message),
@@ -104,7 +106,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
       refetchQueries: [
         {
           query: GET_TRANSACTION,
-          variables: { id: transaction.id },
+          variables: { transactionId: transaction.id },
         },
       ],
       awaitRefetchQueries: true,
@@ -118,7 +120,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
       refetchQueries: [
         {
           query: GET_TRANSACTION,
-          variables: { id: transaction.id },
+          variables: { transactionId: transaction.id },
         },
       ],
       onError: (error) => setError(error.message),
@@ -131,7 +133,21 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
       refetchQueries: [
         {
           query: GET_TRANSACTION,
-          variables: { id: transaction.id },
+          variables: { transactionId: transaction.id },
+        },
+      ],
+      onError: (error) => setError(error.message),
+    }
+  );
+
+  const [openDispute, { loading: openDisputeLoading }] = useMutation(
+    OPEN_DISPUTE,
+    {
+      onCompleted: (data) => onComplete(data),
+      refetchQueries: [
+        {
+          query: GET_TRANSACTION,
+          variables: { transactionId: transaction.id },
         },
       ],
       onError: (error) => setError(error.message),
@@ -159,8 +175,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
   };
 
   const handleDispute = (data: OpenDisputeInput) => {
-    console.log("Dispute submitted:", data);
-    onComplete();
+    openDispute({ variables: { input: data } });
   };
 
   const actionConfig: Record<
@@ -234,7 +249,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
         <DisputeForm
           transaction={transaction}
           onSubmit={handleDispute}
-          loading={false}
+          loading={openDisputeLoading}
         />
       ),
     },
@@ -255,7 +270,22 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error.includes("insufficient wallet balance") ? (
+                <p>
+                  Insufficient wallet balance{" "}
+                  <Link
+                    href="/dashboard/wallet/fund"
+                    target="_blank"
+                    className="text-primary"
+                  >
+                    Fund wallet here
+                  </Link>
+                </p>
+              ) : (
+                error
+              )}
+            </AlertDescription>
           </Alert>
         )}
 

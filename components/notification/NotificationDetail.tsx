@@ -51,7 +51,7 @@ export function NotificationDetail({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2 lg:px-4">
       <div className="flex items-center space-x-2">
         <Button
           variant="ghost"
@@ -61,10 +61,10 @@ export function NotificationDetail({
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-lg font-semibold">Notification Details</h2>
+        {/* <h2 className="text-lg font-semibold">Notification Details</h2> */}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 ">
         <div className="flex items-center space-x-2">
           <Badge className={getNotificationTypeColor(notification.type)}>
             {notification.type}
@@ -91,15 +91,6 @@ export function NotificationDetail({
             {notification.message}
           </p>
         </div>
-
-        {notification.relatedEntityType && (
-          <div>
-            <h4 className="text-sm font-medium mb-2">Related to</h4>
-            <p className="text-sm text-muted-foreground">
-              {notification.relatedEntityType}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

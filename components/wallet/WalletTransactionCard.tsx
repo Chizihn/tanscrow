@@ -3,10 +3,21 @@ import {
   WalletTransactionStatus,
   WalletTransactionType,
 } from "@/types/wallet";
-import { ArrowDown, ArrowUp, ArrowUpRight, Clock, Plus } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpRight,
+  Clock,
+  Plus,
+  Loader2,
+} from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import { formatDate } from "@/utils";
+import { useState } from "react";
+import { useRouter } from "next/navigation"; // Add this import
+import { APP_URL } from "@/constants";
 
 interface WalletTransactionCardProps {
   transaction: Partial<WalletTransaction>;
@@ -18,19 +29,37 @@ const WalletTransactionCard: React.FC<WalletTransactionCardProps> = ({
   const typeInfo = getTransactionTypeInfo(
     transaction.type as WalletTransactionType
   );
+  const [isConfirming, setIsConfirming] = useState(false);
+  const router = useRouter(); // Add this line
+
+  const handleConfirmPayment = async () => {
+    if (
+      !transaction.reference ||
+      transaction.status !== WalletTransactionStatus.PENDING
+    ) {
+      return;
+    }
+    setIsConfirming(true);
+
+    router.push(
+      `${APP_URL}/payment/verify/paystack?trxref=${encodeURIComponent(
+        transaction.reference
+      )}&reference=${encodeURIComponent(transaction.reference)}`
+    );
+  };
 
   return (
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className={`p-2 rounded-full bg-muted ${typeInfo.color}`}>
               {typeInfo.icon}
             </div>
             <div>
               <p className="font-medium">{transaction.description}</p>
               <p className="text-xs text-muted-foreground">
-                {formatDate(transaction.createdAt as Date)} •{" "}
+                {formatDate(transaction.createdAt as Date)} •
                 <span className="font-medium">{transaction.reference}</span>
               </p>
             </div>
@@ -46,6 +75,25 @@ const WalletTransactionCard: React.FC<WalletTransactionCardProps> = ({
             >
               {transaction.status}
             </Badge>
+            {transaction.status === WalletTransactionStatus.PENDING &&
+              transaction.type !== WalletTransactionType.WITHDRAWAL && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="ml-4"
+                  onClick={handleConfirmPayment}
+                  disabled={isConfirming}
+                >
+                  {isConfirming ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Confirming...
+                    </>
+                  ) : (
+                    "Confirm Payment"
+                  )}
+                </Button>
+              )}
           </div>
         </div>
       </CardContent>

@@ -8,6 +8,16 @@ export const GET_DISPUTES = gql`
       reason
       description
       resolution
+      transaction {
+        id
+        transactionCode
+        title
+        description
+        paymentCurrency
+        amount
+        escrowFee
+        totalAmount
+      }
       createdAt
       updatedAt
     }
@@ -19,7 +29,47 @@ export const GET_DISPUTE = gql`
       id
       transaction {
         id
+        transactionCode
+        seller {
+          id
+          email
+          firstName
+          lastName
+          phoneNumber
+          profileImageUrl
+          accountType
+          verified
+        }
+        buyer {
+          id
+          email
+          firstName
+          lastName
+          phoneNumber
+          profileImageUrl
+          accountType
+          verified
+        }
         title
+        description
+        paymentCurrency
+        amount
+        escrowFee
+        totalAmount
+        paymentReference
+        status
+        escrowStatus
+        deliveryMethod
+        trackingInfo
+        expectedDeliveryDate
+        actualDeliveryDate
+        isPaid
+        type
+        createdAt
+        updatedAt
+        completedAt
+        canceledAt
+        refundedAt
       }
       initiator {
         id
@@ -28,20 +78,15 @@ export const GET_DISPUTE = gql`
         lastName
         phoneNumber
         profileImageUrl
+        accountType
         verified
-        createdAt
-        updatedAt
       }
       moderator {
         id
-        email
         firstName
+        email
         lastName
-        phoneNumber
         profileImageUrl
-        verified
-        createdAt
-        updatedAt
       }
       status
       reason

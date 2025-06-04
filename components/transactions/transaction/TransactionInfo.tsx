@@ -6,7 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, Clock } from "lucide-react";
 import Image from "next/image";
-import { EscrowStatus, Transaction } from "@/types/transaction";
+import {
+  EscrowStatus,
+  Transaction,
+  TransactionStatus,
+} from "@/types/transaction";
 import { DEFAULT_USER_IMG } from "@/constants";
 import { format } from "date-fns";
 
@@ -110,6 +114,22 @@ const TransactionInfo: React.FC<TransactionInfoProps> = ({
                 Delivery Method
               </h4>
               <p>{transaction.deliveryMethod}</p>
+            </div>
+          )}
+
+          {transaction.status === TransactionStatus.COMPLETED && (
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                Actual Delivery Date
+              </h4>
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>
+                  {transaction.actualDeliveryDate
+                    ? format(new Date(transaction.actualDeliveryDate), "PPP")
+                    : "Not specified"}
+                </span>
+              </div>
             </div>
           )}
 

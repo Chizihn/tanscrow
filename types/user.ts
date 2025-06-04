@@ -26,6 +26,11 @@ export enum AccountType {
   ADMIN = "ADMIN",
 }
 
+export enum SearchUserType {
+  GENERAL = "GENERAL",
+  TRANSACTION = "TRANSACTION",
+}
+
 export interface Address {
   id: string;
   street: string;
@@ -35,4 +40,67 @@ export interface Address {
   country: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface UpdateProfileInput {
+  city: string;
+  country: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  postalCode: string;
+  state: string;
+  street: string;
+}
+
+export interface UserDashboardSummary {
+  totalTransactions: number;
+  activeTransactions: number;
+  completedTransactions: number;
+  disputedTransactions: number;
+  canceledTransactions: number;
+  totalAmount: number;
+  totalAmountAsBuyer: number;
+  totalAmountAsSeller: number;
+  totalFeesPaid: number;
+  averageTransactionAmount: number;
+  transactionsAsBuyer: number;
+  transactionsAsSeller: number;
+  statusBreakdown: StatusCount[];
+  recentTransactions: RecentTransaction[];
+  dateRange: {
+    startDate: string;
+    endDate: string;
+  };
+}
+
+export interface UserWalletSummary {
+  availableBalance: number;
+  escrowBalance: number;
+  totalBalance: number;
+  currency: string;
+  recentTransactions: RecentWalletTransaction[];
+}
+
+export interface StatusCount {
+  status: string;
+  count: number;
+}
+
+export interface RecentTransaction {
+  id: string;
+  title: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+  role: string;
+  counterparty: string;
+}
+
+export interface RecentWalletTransaction {
+  id: string;
+  type: string;
+  amount: number;
+  description?: string;
+  createdAt: string;
 }

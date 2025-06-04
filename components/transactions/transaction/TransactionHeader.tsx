@@ -146,6 +146,7 @@ const TransactionHeader: React.FC<TransactionHeaderProps> = ({
           onClick={() => setActiveAction("DISPUTE")}
           variant="destructive"
           className="w-full md:w-auto"
+          disabled={transaction.status === TransactionStatus.DISPUTED}
         >
           <AlertCircle className="mr-2 h-4 w-4" />
           Raise Dispute

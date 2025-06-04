@@ -6,7 +6,7 @@ import { CREATE_TRANSACTION } from "@/graphql/mutations/transaction";
 import { showErrorToast, showSuccessToast } from "@/components/Toast";
 import { useAuthStore } from "@/store/auth-store";
 import { useTransactionStore } from "@/store/transaction-store";
-import { User } from "@/types/user";
+import { SearchUserType, User } from "@/types/user";
 import PageRouter from "@/components/PageRouter";
 
 import {
@@ -73,7 +73,12 @@ export default function TransactionForm() {
   const handleSearchCounterparty = (identifier: string) => {
     if (identifier.trim()) {
       searchUser({
-        variables: { input: identifier },
+        variables: {
+          input: {
+            query: identifier,
+            searchType: SearchUserType.TRANSACTION,
+          },
+        },
       });
     } else {
       setCounterParty(null);

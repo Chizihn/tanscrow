@@ -2,6 +2,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { Transaction, TransactionStatus } from "@/types/transaction";
@@ -12,19 +19,60 @@ import { GET_TRANSACTIONS } from "@/graphql/queries/transaction";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/store/auth-store";
 import { User } from "@/types/user";
+import { useState } from "react";
+import PageHeader from "@/components/PageHeader";
 
 export default function TransactionsPage() {
   const user = (useAuthStore((state) => state.user) as User) || {};
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
   const { data, loading, error } = useQuery<{ transactions: Transaction[] }>(
     GET_TRANSACTIONS,
     {
-      fetchPolicy: "network-only",
+      fetchPolicy: "cache-and-network",
       nextFetchPolicy: "cache-first",
       notifyOnNetworkStatusChange: true,
     }
   );
 
   const transactions: Transaction[] = data?.transactions ?? [];
+
+  // Filter transactions based on role and status
+  const getFilteredTransactions = (role: string) => {
+    let filtered = transactions;
+
+    // Filter by role
+    if (role === "buyer") {
+      filtered = transactions.filter(
+        (t) => t.buyer?.id === (user?.id as string)
+      );
+    } else if (role === "seller") {
+      filtered = transactions.filter(
+        (t) => t.seller?.id === (user?.id as string)
+      );
+    }
+
+    // Filter by status
+    if (statusFilter === "active") {
+      filtered = filtered.filter(
+        (t) =>
+          t.status === TransactionStatus.PENDING ||
+          t.status === TransactionStatus.IN_PROGRESS
+      );
+    } else if (statusFilter === "completed") {
+      filtered = filtered.filter(
+        (t) =>
+          t.status === TransactionStatus.COMPLETED ||
+          t.status === TransactionStatus.DELIVERED
+      );
+    } else if (statusFilter === "disputed") {
+      filtered = filtered.filter(
+        (t) => t.status === TransactionStatus.DISPUTED
+      );
+    }
+
+    return filtered;
+  };
 
   // Skeleton loader for transaction cards
   const TransactionCardSkeleton = () => (
@@ -51,15 +99,57 @@ export default function TransactionsPage() {
     </div>
   );
 
+  const renderTransactionList = (role: string) => {
+    const filteredTransactions = getFilteredTransactions(role);
+
+    if (loading) {
+      return (
+        <>
+          <TransactionCardSkeleton />
+          <TransactionCardSkeleton />
+        </>
+      );
+    }
+
+    if (filteredTransactions.length === 0) {
+      const getMessage = () => {
+        if (role === "buyer")
+          return "No transactions found where you are the buyer";
+        if (role === "seller")
+          return "No transactions found where you are the seller";
+        if (statusFilter === "active") return "No active transactions found";
+        if (statusFilter === "completed")
+          return "No completed transactions found";
+        if (statusFilter === "disputed")
+          return "No disputed transactions found";
+        return "No transactions found";
+      };
+
+      return (
+        <div className="py-10 text-center border rounded-lg">
+          <p className="text-muted-foreground">{getMessage()}</p>
+        </div>
+      );
+    }
+
+    return filteredTransactions.map((transaction) => (
+      <TransactionCard
+        key={transaction.id}
+        transaction={transaction}
+        statusColor={getStatusColor(transaction.status)}
+        userId={user?.id as string}
+      />
+    ));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Transactions</h2>
-          <p className="text-muted-foreground">
-            Manage your escrow transactions
-          </p>
-        </div>
+        <PageHeader
+          title="Transactions"
+          description="  Manage your escrow transactions"
+        />
+
         <Button asChild disabled={loading}>
           <Link href="/dashboard/transactions/create">
             <Plus className="mr-2 h-4 w-4" /> Create Transaction
@@ -78,6 +168,21 @@ export default function TransactionsPage() {
             disabled={loading}
           />
         </div>
+        <Select
+          value={statusFilter}
+          onValueChange={setStatusFilter}
+          disabled={loading}
+        >
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="disputed">Disputed</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Error State */}
@@ -87,7 +192,7 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Tabs for filtering by role */}
+      {/* Single level tabs for role filtering */}
       <Tabs defaultValue="all">
         <TabsList>
           <TabsTrigger value="all" disabled={loading}>
@@ -101,205 +206,16 @@ export default function TransactionsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* All Transactions */}
-        <TabsContent value="all" className="space-y-4 mt-4">
-          <Tabs defaultValue="all">
-            <TabsList>
-              <TabsTrigger value="all" disabled={loading}>
-                All
-              </TabsTrigger>
-              <TabsTrigger value="active" disabled={loading}>
-                Active
-              </TabsTrigger>
-              <TabsTrigger value="completed" disabled={loading}>
-                Completed
-              </TabsTrigger>
-              <TabsTrigger value="disputed" disabled={loading}>
-                Disputed
-              </TabsTrigger>
-            </TabsList>
-
-            {/* All */}
-            <TabsContent value="all" className="space-y-4 mt-4">
-              {loading ? (
-                // Skeleton loaders while loading
-                <>
-                  <TransactionCardSkeleton />
-                </>
-              ) : transactions.length === 0 ? (
-                <div className="py-10 text-center border rounded-lg">
-                  <p className="text-muted-foreground">No transactions found</p>
-                </div>
-              ) : (
-                transactions?.map((transaction) => (
-                  <TransactionCard
-                    key={transaction.id}
-                    transaction={transaction}
-                    statusColor={getStatusColor(transaction.status)}
-                    userId={user?.id as string}
-                  />
-                ))
-              )}
-            </TabsContent>
-
-            {/* Active */}
-            <TabsContent value="active" className="space-y-4 mt-4">
-              {loading ? (
-                // Skeleton loaders while loading
-                <>
-                  <TransactionCardSkeleton />
-                </>
-              ) : transactions.filter(
-                  (t) =>
-                    t.status === TransactionStatus.PENDING ||
-                    t.status === TransactionStatus.IN_PROGRESS
-                ).length === 0 ? (
-                <div className="py-10 text-center border rounded-lg">
-                  <p className="text-muted-foreground">
-                    No active transactions found
-                  </p>
-                </div>
-              ) : (
-                transactions
-                  .filter(
-                    (t) =>
-                      t.status === TransactionStatus.PENDING ||
-                      t.status === TransactionStatus.IN_PROGRESS
-                  )
-                  ?.map((transaction) => (
-                    <TransactionCard
-                      key={transaction.id}
-                      transaction={transaction}
-                      statusColor={getStatusColor(transaction.status)}
-                      userId={user?.id as string}
-                    />
-                  ))
-              )}
-            </TabsContent>
-
-            {/* Completed */}
-            <TabsContent value="completed" className="space-y-4 mt-4">
-              {loading ? (
-                // Skeleton loaders while loading
-                <>
-                  <TransactionCardSkeleton />
-                  <TransactionCardSkeleton />
-                </>
-              ) : transactions.filter(
-                  (t) =>
-                    t.status === TransactionStatus.COMPLETED ||
-                    t.status === TransactionStatus.DELIVERED
-                ).length === 0 ? (
-                <div className="py-10 text-center border rounded-lg">
-                  <p className="text-muted-foreground">
-                    No completed transactions found
-                  </p>
-                </div>
-              ) : (
-                transactions
-                  .filter(
-                    (t) =>
-                      t.status === TransactionStatus.COMPLETED ||
-                      t.status === TransactionStatus.DELIVERED
-                  )
-                  .map((transaction) => (
-                    <TransactionCard
-                      key={transaction?.id}
-                      transaction={transaction}
-                      statusColor={getStatusColor(transaction.status)}
-                      userId={user?.id as string}
-                    />
-                  ))
-              )}
-            </TabsContent>
-
-            {/* Disputed */}
-            <TabsContent value="disputed" className="space-y-4 mt-4">
-              {loading ? (
-                // Skeleton loaders while loading
-                <>
-                  <TransactionCardSkeleton />
-                </>
-              ) : transactions.filter(
-                  (t) => t.status === TransactionStatus.DISPUTED
-                ).length === 0 ? (
-                <div className="py-10 text-center border rounded-lg">
-                  <p className="text-muted-foreground">
-                    No disputed transactions found
-                  </p>
-                </div>
-              ) : (
-                transactions
-                  .filter((t) => t.status === TransactionStatus.DISPUTED)
-                  ?.map((transaction) => (
-                    <TransactionCard
-                      key={transaction.id}
-                      transaction={transaction}
-                      statusColor={getStatusColor(transaction.status)}
-                      userId={user.id as string}
-                    />
-                  ))
-              )}
-            </TabsContent>
-          </Tabs>
+        <TabsContent value="all" className="space-y-4 mt-6">
+          {renderTransactionList("all")}
         </TabsContent>
 
-        {/* As Buyer */}
-        <TabsContent value="buyer" className="space-y-4 mt-4">
-          {loading ? (
-            // Skeleton loaders while loading
-            <>
-              <TransactionCardSkeleton />
-              <TransactionCardSkeleton />
-            </>
-          ) : transactions.filter((t) => t.buyer?.id === (user?.id as string))
-              .length === 0 ? (
-            <div className="py-10 text-center border rounded-lg">
-              <p className="text-muted-foreground">
-                No transactions found where you are the buyer
-              </p>
-            </div>
-          ) : (
-            transactions
-              .filter((t) => t.buyer?.id === (user?.id as string))
-              ?.map((transaction) => (
-                <TransactionCard
-                  key={transaction.id}
-                  transaction={transaction}
-                  statusColor={getStatusColor(transaction.status)}
-                  userId={user?.id as string}
-                />
-              ))
-          )}
+        <TabsContent value="buyer" className="space-y-4 mt-6">
+          {renderTransactionList("buyer")}
         </TabsContent>
 
-        {/* As Seller */}
-        <TabsContent value="seller" className="space-y-4 mt-4">
-          {loading ? (
-            // Skeleton loaders while loading
-            <>
-              <TransactionCardSkeleton />
-              <TransactionCardSkeleton />
-            </>
-          ) : transactions.filter((t) => t.seller?.id === (user?.id as string))
-              .length === 0 ? (
-            <div className="py-10 text-center border rounded-lg">
-              <p className="text-muted-foreground">
-                No transactions found where you are the seller
-              </p>
-            </div>
-          ) : (
-            transactions
-              .filter((t) => t.seller?.id === (user?.id as string))
-              ?.map((transaction) => (
-                <TransactionCard
-                  key={transaction.id}
-                  transaction={transaction}
-                  statusColor={getStatusColor(transaction.status)}
-                  userId={user?.id as string}
-                />
-              ))
-          )}
+        <TabsContent value="seller" className="space-y-4 mt-6">
+          {renderTransactionList("seller")}
         </TabsContent>
       </Tabs>
     </div>

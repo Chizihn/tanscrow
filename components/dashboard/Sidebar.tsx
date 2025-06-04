@@ -12,8 +12,10 @@ import {
   Settings,
   HelpCircle,
   LogOut,
+  Logs,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
+import { Button } from "../ui/button";
 
 interface SidebarNavItemProps {
   href: string;
@@ -74,6 +76,11 @@ export function Sidebar() {
       label: "Profile",
     },
     {
+      href: "/dashboard/audit",
+      icon: <Logs className="h-5 w-5" />,
+      label: "Audit logs",
+    },
+    {
       href: "/dashboard/settings",
       icon: <Settings className="h-5 w-5" />,
       label: "Settings",
@@ -89,7 +96,7 @@ export function Sidebar() {
     <div className="flex h-screen w-[240px] flex-col border-r bg-background p-4 overflow-y-auto">
       <div className="flex h-14 items-center px-4 font-semibold">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <span className="text-xl font-bold">Escrow</span>
+          <span className="text-xl font-bold">Tanscrow</span>
         </Link>
       </div>
       <nav className="flex-1 space-y-1 py-4">
@@ -108,13 +115,15 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="border-t pt-4">
-        <button
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all hover:bg-accent"
+        <Button
+          variant="destructive"
+          className="w-full"
+          // className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all hover:bg-accent"
           onClick={handleLogout}
         >
           <LogOut className="h-5 w-5" />
           Logout
-        </button>
+        </Button>
       </div>
     </div>
   );

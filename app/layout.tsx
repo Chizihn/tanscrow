@@ -5,9 +5,9 @@ import { Suspense } from "react";
 import LoadingState from "@/components/LoadingState";
 
 export const metadata: Metadata = {
-  title: "Escrow | Secure Digital Escrow Service",
+  title: "Tanscrow | Secure Digital Escrow Service",
   description:
-    "Escrow is your trusted digital escrow service for safe and seamless online transactions. Protect your payments and deliveries with our secure platform.",
+    "Tanscrow is your trusted digital escrow service for safe and seamless online transactions. Protect your payments and deliveries with our secure platform.",
 };
 
 export default function RootLayout({

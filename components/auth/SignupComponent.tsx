@@ -153,7 +153,7 @@ export function SignUpComponent() {
   return (
     <AuthCard
       title="Create an account"
-      description="You can create an account to start using our escrow service"
+      description="You can create an account to start using our service"
     >
       <CardContent className=" pt-1 pb-6 ">
         <Tabs
@@ -257,7 +257,7 @@ export function SignUpComponent() {
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="+1234567890"
+                          placeholder="2348123456789"
                           type="tel"
                           className="bg-secondary/50"
                           {...field}
@@ -384,7 +384,7 @@ export function SignUpComponent() {
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="+1234567890"
+                          placeholder="2348123456789"
                           type="tel"
                           className="bg-secondary/50"
                           {...field}

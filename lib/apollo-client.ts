@@ -1,5 +1,5 @@
 import { API_URL } from "@/constants";
-import { token } from "@/utils/session";
+import { getToken } from "@/utils/session";
 import {
   ApolloClient,
   InMemoryCache,
@@ -7,6 +7,8 @@ import {
   from,
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
+
+const token = getToken();
 
 // 1. HTTP link
 const httpLink = createHttpLink({

@@ -5,6 +5,7 @@ import NoDisputes from "@/components/disputes/NoDisputes";
 import DisputeCard from "@/components/disputes/DisputeCard";
 import { GET_DISPUTES } from "@/graphql/queries/dispute";
 import { useQuery } from "@apollo/client";
+import PageHeader from "@/components/PageHeader";
 
 export default function DisputesPage() {
   const { data, loading, error } = useQuery<{ disputes: Dispute[] }>(
@@ -32,21 +33,16 @@ export default function DisputesPage() {
       </div>
     );
 
-  if (!loading && disputes?.length === 0)
-    return (
-      <div>
-        <p>No disputes availabe</p>
-      </div>
-    );
+  // if (!loading && disputes?.length === 0)
+  //   return (
+  //     <div>
+  //       <p>No disputes availabe</p>
+  //     </div>
+  //   );
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Disputes</h2>
-          <p className="text-muted-foreground">Manage transaction disputes</p>
-        </div>
-      </div>
+      <PageHeader title="Disputes" description="Manage transaction disputes" />
 
       {/* Tabs for filtering disputes */}
       <Tabs defaultValue="all">
