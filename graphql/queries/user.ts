@@ -34,8 +34,8 @@ export const ME = gql`
 `;
 
 export const GET_USER = gql`
-  query User($userId: String!) {
-    user(id: $userId) {
+  query User($id: String!) {
+    user(id: $id) {
       id
       email
       firstName
@@ -45,13 +45,18 @@ export const GET_USER = gql`
       verified
       createdAt
       updatedAt
-      address {
+
+      reviewsReceived {
         id
-        street
-        city
-        state
-        postalCode
-        country
+        rating
+        comment
+        reviewer {
+          id
+          firstName
+          lastName
+          profileImageUrl
+        }
+
         createdAt
         updatedAt
       }

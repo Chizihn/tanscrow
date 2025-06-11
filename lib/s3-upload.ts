@@ -1,28 +1,49 @@
 // src/lib/s3-upload.ts
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const s3Client = new S3Client({
-  region: process.env.NEXT_PUBLIC_AWS_REGION as string,
-  credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID as string,
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY as string,
-  },
-});
+import { getToken } from "@/utils/session";
 
-export async function getPresignedUploadUrl(key: string) {
-  const command = new PutObjectCommand({
-    Bucket: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME as string,
-    Key: key,
-  });
-
+export async function getPresignedUploadUrl(
+  key: string,
+  contentType: string,
+  file: File
+) {
   try {
-    const signedUrl = await getSignedUrl(s3Client, command, {
-      expiresIn: 3600,
+    const token = getToken();
+    // First, get the presigned URL from our backend API
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/upload/s3`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ key, contentType }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to get presigned URL");
+    }
+
+    const { url } = await response.json();
+
+    // Now use the presigned URL to upload the file
+    const uploadResponse = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": contentType,
+      },
+      body: await file.arrayBuffer(),
     });
-    return signedUrl;
+
+    if (!uploadResponse.ok) {
+      throw new Error("Failed to upload file");
+    }
+
+    return url;
   } catch (error) {
-    console.error("Error generating presigned URL:", error);
+    console.error("Error uploading file:", error);
     throw error;
   }
 }
@@ -90,21 +111,11 @@ export function validateDocument(file: File): boolean {
 // Upload any file to S3
 export async function uploadToS3(file: File, s3Key: string): Promise<string> {
   try {
-    const presignedUrl = await getPresignedUploadUrl(s3Key);
+    // Get the presigned URL and upload the file in one go
+    const url = await getPresignedUploadUrl(s3Key, file.type, file);
 
-    const response = await fetch(presignedUrl, {
-      method: "PUT",
-      body: file,
-      headers: {
-        "Content-Type": file.type,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to upload file");
-    }
-
-    return `https://${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${s3Key}`;
+    // The URL returned from getPresignedUploadUrl is the S3 URL
+    return url;
   } catch (error) {
     console.error("Upload error:", error);
     throw error;

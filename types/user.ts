@@ -17,6 +17,7 @@ export interface User {
   wallet?: Wallet;
   providers: Provider[];
   verificationDocuments?: VerificationDocument[];
+  reviews: Review[];
   // sellerProfile:
   // buyerProfile:
 }
@@ -103,4 +104,13 @@ export interface RecentWalletTransaction {
   amount: number;
   description?: string;
   createdAt: string;
+}
+
+export interface Review {
+  readonly id: string;
+  readonly rating: number;
+  comment: string;
+  readonly createdAt: Date;
+  updatedAt: Date;
+  reviewer: Partial<User>;
 }
