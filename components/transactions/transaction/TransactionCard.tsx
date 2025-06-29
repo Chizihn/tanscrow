@@ -16,9 +16,6 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
   transaction,
   statusColor,
 }) => {
-  // const isBuyer = transaction.buyer?.id === userId;
-  // const counterparty = isBuyer ? transaction.seller : transaction.buyer;
-
   return (
     <Card className="hover:bg-accent/50 transition-colors border overflow-hidden">
       <CardContent className="p-4">
@@ -43,18 +40,6 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
           {/* Details */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-1 gap-2">
             <div className="space-y-2">
-              {/* Counterparty */}
-              {/* <div className="flex items-center gap-1 text-sm">
-                <Clock className="h-3 w-3 text-muted-foreground" />
-                <span className="text-muted-foreground">
-                  {isBuyer ? "Seller" : "Buyer"}:{" "}
-                  <span className="font-medium text-foreground">
-                    {counterparty?.firstName} {counterparty?.lastName}
-                  </span>
-                </span>
-              </div> */}
-
-              {/* Date */}
               <p className="text-xs text-muted-foreground">
                 Created: {formatDate(transaction.createdAt as Date)}
               </p>
