@@ -44,7 +44,7 @@ import { showErrorToast, showSuccessToast } from "../Toast";
 export function SignUpComponent() {
   const router = useRouter();
 
-  const { setUser, setToken } = useAuthStore();
+  const { setUser, setAccessToken } = useAuthStore();
 
   // Email sign up form
   const emailSignUpForm = useForm({
@@ -64,12 +64,13 @@ export function SignUpComponent() {
   // Store authentication data (token and user info)
   const storeAuthData = (data: Payload) => {
     // Store token in cookie for persistence
-    cookieStorage.setItem("token", data.token);
+    cookieStorage.setItem("token", data.accessToken);
 
     // Update auth store
-    setToken(data.token);
+    setAccessToken(data.accessToken);
     setUser(data.user);
   };
+
 
   //Sign up with email mutation
   const [signUpWithEmail, { loading: emailSignupLoading }] = useMutation(

@@ -31,6 +31,7 @@ import { showErrorToast, showSuccessToast } from "@/components/Toast";
 import PageHeader from "@/components/PageHeader";
 import { WITHDRAW_TO_NIGERIAN_BANK } from "@/graphql/mutations/wallet";
 import { PaymentCurrency } from "@/types/payment";
+import { useAuthStore } from "@/store/auth-store";
 
 interface WithdrawInput {
   accountName: string;
@@ -57,6 +58,8 @@ export default function WithdrawFundsPage() {
   });
 
   const wallet = data?.wallet ?? null;
+
+  const user = useAuthStore((state) => state.user);
 
   const [
     resolveAccountDetails,
@@ -86,7 +89,19 @@ export default function WithdrawFundsPage() {
         setAmount("");
       },
       onError: (error) => {
-        showErrorToast(error.message);
+        // Enhanced error handling for verification/document errors
+        const message = error.message || "Withdrawal failed.";
+        if (
+          message.includes("not verified") ||
+          message.includes("document") ||
+          message.toLowerCase().includes("verification")
+        ) {
+          showErrorToast(
+            "You must be verified and have all required documents before withdrawing. Please complete your verification in your profile."
+          );
+        } else {
+          showErrorToast(message);
+        }
       },
     }
   );
@@ -134,6 +149,14 @@ export default function WithdrawFundsPage() {
   const numAmount = Number(amount || 0);
   const processingFee = 100;
   const totalToReceive = Math.max(numAmount - processingFee, 0);
+
+  // Name match check
+  const normalizedAccountName = (accountName || "").toLowerCase().replace(/\s+/g, " ");
+  const normalizedFirstName = (user?.firstName || "").toLowerCase();
+  const normalizedLastName = (user?.lastName || "").toLowerCase();
+  const nameMatches =
+    normalizedAccountName.includes(normalizedFirstName) &&
+    normalizedAccountName.includes(normalizedLastName);
 
   if (walletError) {
     return <ErrorState message={walletError.message} />;
@@ -260,6 +283,11 @@ export default function WithdrawFundsPage() {
                 <p className="text-sm text-red-500">
                   Failed to resolve account name. Please check your account
                   number and selected bank.
+                </p>
+              )}
+              {!resolvingAccount && accountName && !nameMatches && (
+                <p className="text-sm text-orange-500 mt-2">
+                  Warning: The resolved bank account name does not match your registered name. Withdrawals are only allowed to accounts owned by you. If this is not your account, please use your own bank details.
                 </p>
               )}
             </div>

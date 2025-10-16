@@ -5,6 +5,23 @@ export enum TransactionRole {
   BUYER = "BUYER",
   SELLER = "SELLER",
 }
+export interface Document {
+  id: string;
+  name: string;
+  fileName: string;
+  fileType: string;
+  url: string;
+  type: string;
+  size: number;
+  uploadedAt: Date;
+  description?: string;
+  uploadedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
 export interface Transaction {
   id: string;
   transactionCode: string;
@@ -28,11 +45,12 @@ export interface Transaction {
   createdAt: Date;
   updatedAt: Date;
   completedAt?: Date;
+  documents?: Document[];
   canceledAt?: Date;
   refundedAt?: Date;
   payment: Payment;
-  buyer: Partial<User>;
-  seller: Partial<User>;
+  buyer: Partial<User> & { id: string };
+  seller: Partial<User> & { id: string };
   logs: TransactionLog[];
 }
 

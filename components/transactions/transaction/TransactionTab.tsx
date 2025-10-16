@@ -10,14 +10,14 @@ import {
 } from "@/components/ui/card";
 import { MessageSquare, Download } from "lucide-react";
 import { Transaction } from "@/types/transaction";
+import DocumentsList from "./DocumentsList";
 
 interface TransactionTabsProps {
   transaction: Transaction;
-  // isBuyer: boolean;
-  // isSeller?: boolean
+  refetch?: () => void;
 }
 
-const TransactionTabs: React.FC<TransactionTabsProps> = ({}) => {
+const TransactionTabs: React.FC<TransactionTabsProps> = ({ transaction, refetch }) => {
   return (
     <Tabs defaultValue="messages">
       <TabsList className="grid grid-cols-2 w-full max-w-md">
@@ -37,19 +37,6 @@ const TransactionTabs: React.FC<TransactionTabsProps> = ({}) => {
             <CardTitle>Messages</CardTitle>
             <CardDescription>Communicate with the other party</CardDescription>
           </CardHeader>
-          {/* <CardContent>
-            {transaction && transaction.messages.length > 0 ? (
-              <MessagesList messages={transaction.messages} currentUserId={isBuyer ? transaction.buyer.id : transaction.seller.id} />
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No messages yet</p>
-                <Button className="mt-4">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Start Conversation
-                </Button>
-              </div>
-            )}
-          </CardContent> */}
         </Card>
       </TabsContent>
 
@@ -61,21 +48,9 @@ const TransactionTabs: React.FC<TransactionTabsProps> = ({}) => {
               Upload and view transaction documents
             </CardDescription>
           </CardHeader>
-          {/* <CardContent>
-            {transaction.documents && transaction.documents.length > 0 ? (
-              <DocumentsList documents={transaction.documents} />
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  No documents uploaded yet
-                </p>
-                <Button className="mt-4">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Document
-                </Button>
-              </div>
-            )}
-          </CardContent> */}
+          <div className="p-4">
+            <DocumentsList documents={transaction.documents || []} transaction={transaction} refetch={refetch} />
+          </div>
         </Card>
       </TabsContent>
     </Tabs>

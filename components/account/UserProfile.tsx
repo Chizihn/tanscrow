@@ -61,10 +61,20 @@ export function UserProfile({ user }: { user: UserProfileData }) {
   async function onSubmit(data: z.infer<typeof profileSchema>) {
     setIsUpdating(true);
     try {
-      // Handle profile update mutation here
-      console.log("Profile update data:", data);
+      // TODO: Implement actual profile update mutation
+      // const [updateProfile] = useMutation(UPDATE_PROFILE);
+      // await updateProfile({
+      //   variables: {
+      //     input: {
+      //       firstName: data.firstName,
+      //       lastName: data.lastName,
+      //       email: data.email,
+      //       phoneNumber: data.phoneNumber,
+      //     },
+      //   },
+      // });
 
-      // Simulate API request
+      // For now, simulate API request until mutation is implemented
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast.success("Your profile information has been updated successfully.");

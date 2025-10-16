@@ -3,10 +3,12 @@ import { User } from "@/types/user";
 import { cookieStorage } from "@/utils/session";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { getAccessToken, setAccessToken, removeAccessToken, getRefreshToken, setRefreshToken, removeRefreshToken } from "@/utils/session";
 
 export interface PersistAuth {
   user: Partial<User> | null;
-  token: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
@@ -14,7 +16,8 @@ export interface PersistAuth {
 
 export interface AuthState extends PersistAuth {
   setUser: (user: Partial<User> | null) => void;
-  setToken: (token: string | null) => void;
+  setAccessToken: (token: string | null) => void;
+  setRefreshToken: (token: string | null) => void;
   setIsAuthenticated: (isAuthenticated: boolean) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -25,7 +28,8 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
+      accessToken: null,
+      refreshToken: null,
       isAuthenticated: false,
       loading: false,
       error: null,
@@ -36,11 +40,22 @@ export const useAuthStore = create<AuthState>()(
           user,
         })),
 
-      setToken: (token) =>
+      setAccessToken: (token) => {
         set((state) => ({
           ...state,
-          token,
-        })),
+          accessToken: token,
+        }));
+        if (token) setAccessToken(token);
+        else removeAccessToken();
+      },
+      setRefreshToken: (token) => {
+        set((state) => ({
+          ...state,
+          refreshToken: token,
+        }));
+        if (token) setRefreshToken(token);
+        else removeRefreshToken();
+      },
 
       setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
 
@@ -49,9 +64,8 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         // Clear cookies using multiple methods to ensure they're removed
-
-        // Method 1: Using your cookie storage utility
-        cookieStorage.removeItem("token");
+        removeAccessToken();
+        removeRefreshToken();
         cookieStorage.removeItem("tanscrow-auth");
 
         // Method 2: Direct cookie clearing (more reliable)
@@ -85,7 +99,8 @@ export const useAuthStore = create<AuthState>()(
         // Update store state
         set({
           user: null,
-          token: null,
+          accessToken: null,
+          refreshToken: null,
           isAuthenticated: false,
           loading: false,
           error: null,
@@ -99,7 +114,8 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => cookieStorage),
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

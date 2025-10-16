@@ -32,7 +32,7 @@ import { useRouter } from "next/navigation";
 
 export function SignInComponent() {
   const router = useRouter();
-  const { setUser, setToken } = useAuthStore();
+  const { setUser, setAccessToken } = useAuthStore();
 
   // Email sign in form
   const emailSignInForm = useForm({
@@ -46,10 +46,10 @@ export function SignInComponent() {
   // Store authentication data (token and user info)
   const storeAuthData = (data: Payload) => {
     // Store token in cookie for persistence
-    cookieStorage.setItem("token", data.token);
+    cookieStorage.setItem("token", data.accessToken);
 
     // Update auth store
-    setToken(data.token);
+    setAccessToken(data.accessToken);
     setUser(data.user);
   };
 

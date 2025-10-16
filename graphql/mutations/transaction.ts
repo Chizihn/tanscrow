@@ -314,3 +314,23 @@ export const GET_TRANSACTION_REPORT = gql`
     }
   }
 `;
+
+export const ADD_TRANSACTION_DOCUMENT = gql`
+  mutation AddTransactionDocument($transactionId: String!, $url: String!, $fileName: String!, $fileType: String!, $description: String) {
+    addTransactionDocument(
+      transactionId: $transactionId,
+      url: $url,
+      fileName: $fileName,
+      fileType: $fileType,
+      description: $description
+    ) {
+      id
+      url
+      fileName
+      fileType
+      uploadedBy { id firstName lastName }
+      uploadedAt
+      description
+    }
+  }
+`;

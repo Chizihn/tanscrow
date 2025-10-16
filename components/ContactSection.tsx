@@ -61,8 +61,21 @@ export function ContactSection() {
     setSubmitStatus(null);
 
     try {
-      // TODO: Implement actual form submission logic
+      // TODO: Implement actual contact form submission mutation
+      // const [submitContactForm] = useMutation(SUBMIT_CONTACT_FORM);
+      // await submitContactForm({
+      //   variables: {
+      //     input: {
+      //       name: formData.name,
+      //       email: formData.email,
+      //       message: formData.message,
+      //     },
+      //   },
+      // });
+
+      // For now, simulate API request until mutation is implemented
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      
       setSubmitStatus("success");
       setFormData({ name: "", email: "", message: "" });
     } catch (error) {

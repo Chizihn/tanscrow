@@ -96,13 +96,16 @@ export function ConnectedAccounts({
 
     setIsProcessing(true);
     try {
-      // Handle add provider mutation here
-      console.log("Adding provider:", {
-        type: addDialog.type,
-        value: newProvider,
-      });
+      // TODO: Implement actual add provider mutation
+      // const [addProvider] = useMutation(ADD_PROVIDER);
+      // await addProvider({
+      //   variables: {
+      //     type: addDialog.type,
+      //     value: newProvider,
+      //   },
+      // });
 
-      // Simulate API request
+      // For now, simulate the API request until mutation is implemented
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const newId = Math.random().toString(36).substring(2, 9);
@@ -134,10 +137,15 @@ export function ConnectedAccounts({
 
     setIsProcessing(true);
     try {
-      // Handle set primary provider mutation here
-      console.log("Setting primary provider:", provider);
+      // TODO: Implement actual set primary provider mutation
+      // const [setPrimaryProvider] = useMutation(SET_PRIMARY_PROVIDER);
+      // await setPrimaryProvider({
+      //   variables: {
+      //     providerId: provider.id,
+      //   },
+      // });
 
-      // Simulate API request
+      // For now, simulate the API request until mutation is implemented
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       setProviders(

@@ -18,6 +18,7 @@ export interface User {
   providers: Provider[];
   verificationDocuments?: VerificationDocument[];
   reviews: Review[];
+  reviewsReceived: Review[];  // Add this line
   // sellerProfile:
   // buyerProfile:
 }

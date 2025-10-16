@@ -86,6 +86,18 @@ const TransactionDetail: React.FC<Props> = ({ id }) => {
           user={user}
           setActiveAction={setActiveAction}
         />
+        <div className="flex gap-4 mt-2">
+          {isBuyer && (
+            <a href={`/users/${transaction.seller.id}`} target="_blank" rel="noopener noreferrer">
+              <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">View Seller Profile</button>
+            </a>
+          )}
+          {!isBuyer && (
+            <a href={`/users/${transaction.buyer.id}`} target="_blank" rel="noopener noreferrer">
+              <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">View Buyer Profile</button>
+            </a>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

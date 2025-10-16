@@ -11,7 +11,7 @@ export async function getPresignedUploadUrl(
     const token = getToken();
     // First, get the presigned URL from our backend API
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/upload/s3`,
+      `${process.env.NEXT_PUBLIC_API_URL}/upload/s3`,
       {
         method: "POST",
         headers: {

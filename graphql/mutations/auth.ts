@@ -4,7 +4,8 @@ import { gql } from "@apollo/client";
 export const SIGN_UP_WITH_EMAIL = gql`
   mutation SignupWithEmail($input: SignupWithEmailInput!) {
     signupWithEmail(input: $input) {
-      token
+      accessToken
+      refreshToken
       user {
         id
         email
@@ -33,7 +34,8 @@ export const SIGN_UP_WITH_EMAIL = gql`
 export const SIGN_UP_WITH_PHONE = gql`
   mutation SignupWithPhone($input: SignupWithPhoneInput!) {
     signupWithPhone(input: $input) {
-      token
+      accessToken
+      refreshToken
       user {
         id
         email
@@ -63,7 +65,8 @@ export const SIGN_UP_WITH_PHONE = gql`
 export const SIGN_IN_WITH_EMAIL = gql`
   mutation SigninWithEmail($input: SigninWithEmailInput!) {
     signinWithEmail(input: $input) {
-      token
+      accessToken
+      refreshToken
       user {
         id
         email
@@ -92,7 +95,8 @@ export const SIGN_IN_WITH_EMAIL = gql`
 export const SIGN_IN_WITH_PHONE = gql`
   mutation SigninWithPhone($input: SigninWithPhoneInput!) {
     signinWithPhone(input: $input) {
-      token
+      accessToken
+      refreshToken
       user {
         id
         email
@@ -127,5 +131,35 @@ export const FORGOT_PASSWORD = gql`
 export const RESET_PASSWORD = gql`
   mutation ResetPassword($input: ResetPasswordInput!) {
     resetPassword(input: $input)
+  }
+`;
+
+export const REFRESH_TOKEN = gql`
+  mutation RefreshToken($refreshToken: String!) {
+    refreshToken(refreshToken: $refreshToken) {
+      accessToken
+      refreshToken
+      user {
+        id
+        email
+        firstName
+        lastName
+        phoneNumber
+        profileImageUrl
+        accountType
+        verified
+        providers {
+          id
+          provider
+          providerId
+          refreshToken
+          tokenExpiry
+          userId
+          createdAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
   }
 `;

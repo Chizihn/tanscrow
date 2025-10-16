@@ -78,6 +78,15 @@ const TransactionHeader: React.FC<TransactionHeaderProps> = ({
                 <XCircle className="mr-2 h-4 w-4" />
                 Cancel
               </Button>
+              <Button
+                onClick={() => setActiveAction("REQUEST_REFUND")}
+                variant="outline"
+                className="w-full md:w-auto"
+                disabled={transaction.escrowStatus !== "FUNDED"}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Request Refund
+              </Button>
             </div>
           );
         case "DELIVERED":
@@ -85,25 +94,41 @@ const TransactionHeader: React.FC<TransactionHeaderProps> = ({
             <Button
               // onClick={() => setActiveAction("RELEASE_ESCROW")}
               className="w-full md:w-auto"
+              disabled
             >
               <CheckCircle className="mr-2 h-4 w-4" />
               Payment sent
             </Button>
           );
-        case "IN_PROGRESS":
-        case "DELIVERED":
-          if (transaction.escrowStatus === "FUNDED") {
-            return (
-              <Button
-                onClick={() => setActiveAction("REQUEST_REFUND")}
-                variant="outline"
-                className="w-full md:w-auto"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Request Refund
-              </Button>
-            );
-          }
+        case "REFUND_REQUESTED":
+          return (
+            <Button className="w-full md:w-auto" disabled>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refund Requested
+            </Button>
+          );
+        case "DISPUTED":
+          return (
+            <Button className="w-full md:w-auto" disabled>
+              <AlertCircle className="mr-2 h-4 w-4" />
+              Dispute Opened
+            </Button>
+          );
+        case "COMPLETED":
+          return (
+            <Button className="w-full md:w-auto" disabled>
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Transaction Completed
+            </Button>
+          );
+        case "CANCELED":
+          return (
+            <Button className="w-full md:w-auto" disabled>
+              <XCircle className="mr-2 h-4 w-4" />
+              Transaction Canceled
+            </Button>
+          );
+        default:
           break;
       }
     }
@@ -119,7 +144,7 @@ const TransactionHeader: React.FC<TransactionHeaderProps> = ({
                 className="w-full md:w-auto"
               >
                 <Truck className="mr-2 h-4 w-4" />
-                Update Delivery
+                Mark as Delivered
               </Button>
               <Button
                 onClick={() => setActiveAction("CANCEL")}
@@ -131,6 +156,43 @@ const TransactionHeader: React.FC<TransactionHeaderProps> = ({
               </Button>
             </div>
           );
+        case "DELIVERED":
+          return (
+            <Button className="w-full md:w-auto" disabled>
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Awaiting Buyer Approval
+            </Button>
+          );
+        case "REFUND_REQUESTED":
+          return (
+            <Button className="w-full md:w-auto" disabled>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refund Requested
+            </Button>
+          );
+        case "DISPUTED":
+          return (
+            <Button className="w-full md:w-auto" disabled>
+              <AlertCircle className="mr-2 h-4 w-4" />
+              Dispute Opened
+            </Button>
+          );
+        case "COMPLETED":
+          return (
+            <Button className="w-full md:w-auto" disabled>
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Transaction Completed
+            </Button>
+          );
+        case "CANCELED":
+          return (
+            <Button className="w-full md:w-auto" disabled>
+              <XCircle className="mr-2 h-4 w-4" />
+              Transaction Canceled
+            </Button>
+          );
+        default:
+          break;
       }
     }
 
