@@ -1,8 +1,8 @@
 "use client"
 
 import { Chat } from "@/types/chat";
-import { useRouter } from "next/navigation";
 import { DEFAULT_USER_IMG } from "@/constants";
+import Image from "next/image";
 
 interface ChatListItemProps {
   chat: Chat;
@@ -39,11 +39,15 @@ export function ChatListItem({ chat, currentUserId, onClick }: ChatListItemProps
       onClick={onClick}
       className="flex items-center p-3 hover:bg-gray-50 cursor-pointer"
     >
-      <div className="flex-shrink-0">
-        <img
+       <div className="flex-shrink-0">
+        <Image
           src={otherUser?.profileImageUrl || DEFAULT_USER_IMG}
-          alt="Profile"
-          className="w-10 h-10 rounded-full"
+          alt={`${otherUser?.firstName || "User"} ${otherUser?.lastName || ""}`.trim()}
+          width={40}
+          height={40}
+          className="rounded-full"
+          priority={false}
+          unoptimized={otherUser?.profileImageUrl?.startsWith("data:")} // Handle base64 images
         />
       </div>
       <div className="ml-3 flex-1">

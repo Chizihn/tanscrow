@@ -1,41 +1,49 @@
-"use client"
+"use client";
 
-import { useState } from "react";
+import Image from "next/image";
 import { useAuthStore } from "@/store/auth-store";
 import { DEFAULT_USER_IMG } from "@/constants";
 
 interface MessageInputProps {
-  onSend: (message: string) => void;
+  messageText: string;
+  setMessageText: (text: string) => void;
+  onSend: () => void;
   isSending: boolean;
-  isTyping: boolean;
 }
 
-export function MessageInput({ onSend, isSending, isTyping }: MessageInputProps) {
-  const [message, setMessage] = useState("");
+export function MessageInput({
+  messageText,
+  setMessageText,
+  onSend,
+  isSending,
+}: MessageInputProps) {
   const user = useAuthStore((state) => state.user);
 
   const handleSend = () => {
-    if (message.trim()) {
-      onSend(message.trim());
-      setMessage("");
+    if (messageText.trim()) {
+      onSend();
     }
   };
 
   return (
     <div className="flex items-center p-4 border-t border-gray-200">
       <div className="flex-shrink-0">
-        <img
+        <Image
           src={user?.profileImageUrl || DEFAULT_USER_IMG}
-          alt="Profile"
-          className="w-8 h-8 rounded-full"
+          alt={`${user?.firstName || "User"} ${user?.lastName || ""}`.trim()}
+          width={32}
+          height={32}
+          className="rounded-full"
+          priority={false}
+          unoptimized={user?.profileImageUrl?.startsWith("data:")} // Handle base64 images
         />
       </div>
       <div className="flex-1 ml-3">
         <div className="relative">
           <input
             type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -44,6 +52,7 @@ export function MessageInput({ onSend, isSending, isTyping }: MessageInputProps)
             }}
             placeholder="Type a message..."
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSending}
           />
           {isSending && (
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
@@ -54,9 +63,9 @@ export function MessageInput({ onSend, isSending, isTyping }: MessageInputProps)
       </div>
       <button
         onClick={handleSend}
-        disabled={isSending || !message.trim()}
+        disabled={isSending || !messageText.trim()}
         className={`ml-3 px-4 py-2 rounded-lg ${
-          isSending || !message.trim()
+          isSending || !messageText.trim()
             ? "bg-gray-300 cursor-not-allowed"
             : "bg-blue-500 hover:bg-blue-600 text-white"
         }`}

@@ -1,3 +1,4 @@
+"use client"
 import { SignInComponent } from "@/components/auth/SigninComponent";
 import { useAuthStore } from "@/store/auth-store";
 import { useRouter } from "next/navigation";

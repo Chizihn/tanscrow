@@ -8,18 +8,10 @@ export enum TransactionRole {
 export interface Document {
   id: string;
   name: string;
-  fileName: string;
-  fileType: string;
   url: string;
   type: string;
   size: number;
   uploadedAt: Date;
-  description?: string;
-  uploadedBy?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-  };
 }
 
 export interface Transaction {
@@ -45,12 +37,12 @@ export interface Transaction {
   createdAt: Date;
   updatedAt: Date;
   completedAt?: Date;
-  documents?: Document[];
+  documents: Document[];
   canceledAt?: Date;
   refundedAt?: Date;
   payment: Payment;
-  buyer: Partial<User> & { id: string };
-  seller: Partial<User> & { id: string };
+  buyer: Partial<User>;
+  seller: Partial<User>;
   logs: TransactionLog[];
 }
 

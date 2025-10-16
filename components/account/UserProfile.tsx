@@ -24,6 +24,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useMutation } from "@apollo/client";
+import { UPDATE_PROFILE } from "@/graphql/mutations/user";
 
 const profileSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -47,6 +49,8 @@ export type UserProfileData = {
 
 export function UserProfile({ user }: { user: UserProfileData }) {
   const [isUpdating, setIsUpdating] = useState(false);
+      const [updateProfile] = useMutation(UPDATE_PROFILE);
+
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -61,18 +65,16 @@ export function UserProfile({ user }: { user: UserProfileData }) {
   async function onSubmit(data: z.infer<typeof profileSchema>) {
     setIsUpdating(true);
     try {
-      // TODO: Implement actual profile update mutation
-      // const [updateProfile] = useMutation(UPDATE_PROFILE);
-      // await updateProfile({
-      //   variables: {
-      //     input: {
-      //       firstName: data.firstName,
-      //       lastName: data.lastName,
-      //       email: data.email,
-      //       phoneNumber: data.phoneNumber,
-      //     },
-      //   },
-      // });
+      await updateProfile({
+        variables: {
+          input: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phoneNumber: data.phoneNumber,
+          },
+        },
+      });
 
       // For now, simulate API request until mutation is implemented
       await new Promise((resolve) => setTimeout(resolve, 1000));

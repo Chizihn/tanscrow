@@ -1,5 +1,5 @@
 import { API_URL } from "@/constants";
-import { getAccessToken, setAccessToken, getRefreshToken, setRefreshToken, removeAccessToken, removeRefreshToken } from "@/utils/session";
+import { getAccessToken, setAccessToken, getRefreshToken, removeAccessToken, removeRefreshToken } from "@/utils/session";
 import { REFRESH_TOKEN } from "@/graphql/mutations/auth";
 import {
   ApolloClient,
@@ -11,6 +11,13 @@ import {
   FetchResult,
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
+import { GraphQLError } from "graphql";
+
+interface RefreshTokenResponse {
+  refreshToken: {
+    accessToken: string;
+  };
+}
 
 // Create a simple client for the refresh token request
 const tempHttpLink = createHttpLink({
@@ -22,62 +29,62 @@ const tempClient = new ApolloClient({
   cache: new InMemoryCache(),
   defaultOptions: {
     query: {
-      fetchPolicy: 'no-cache',
+      fetchPolicy: "no-cache",
     },
     mutate: {
-      fetchPolicy: 'no-cache',
+      fetchPolicy: "no-cache",
     },
   },
 });
 
 const refreshTokenLink = new ApolloLink((operation, forward) => {
-  return new Observable((observer) => {
-    let sub: any;
+  return new Observable<FetchResult>((observer) => {
     let retried = false;
 
-    function handleError(error: any) {
+    function handleError(error: { graphQLErrors?: readonly GraphQLError[] }) {
       if (
         !retried &&
-        error?.graphQLErrors?.some((e: any) => e.extensions?.code === "UNAUTHENTICATED")
+        error?.graphQLErrors?.some((e) => e.extensions?.code === "UNAUTHENTICATED")
       ) {
         retried = true;
-        
+
         // Try to refresh the token using the temp client
-        tempClient.mutate({
-          mutation: REFRESH_TOKEN,
-          variables: { refreshToken: getRefreshToken() },
-        })
-        .then((result: FetchResult) => {
-          const newAccessToken = result.data?.refreshToken?.accessToken;
-          if (newAccessToken) {
-            setAccessToken(newAccessToken);
-            // Retry the original operation with the new token
-            operation.setContext(({ headers = {} }) => ({
-              headers: {
-                ...headers,
-                Authorization: `Bearer ${newAccessToken}`,
-              },
-            }));
-            // Create a new observable for the retry
-            const forward$ = forward(operation);
-            forward$.subscribe(observer);
-          } else {
+        tempClient
+          .mutate<{ refreshToken: { accessToken: string } }>({
+            mutation: REFRESH_TOKEN,
+            variables: { refreshToken: getRefreshToken() },
+          })
+          .then((result: FetchResult<RefreshTokenResponse>) => {
+            const newAccessToken = result.data?.refreshToken?.accessToken;
+            if (newAccessToken) {
+              setAccessToken(newAccessToken);
+              // Retry the original operation with the new token
+              operation.setContext(({ headers = {} }) => ({
+                headers: {
+                  ...headers,
+                  Authorization: `Bearer ${newAccessToken}`,
+                },
+              }));
+              // Create a new observable for the retry
+              const forward$ = forward(operation);
+              forward$.subscribe(observer);
+            } else {
+              removeAccessToken();
+              removeRefreshToken();
+              observer.error(error);
+            }
+          })
+          .catch((refreshError: Error) => {
             removeAccessToken();
             removeRefreshToken();
-            observer.error(error);
-          }
-        })
-        .catch((refreshError: any) => {
-          removeAccessToken();
-          removeRefreshToken();
-          observer.error(refreshError);
-        });
+            observer.error(refreshError);
+          });
       } else {
         observer.error(error);
       }
     }
 
-    sub = forward(operation).subscribe({
+    const sub = forward(operation).subscribe({
       next: (result) => observer.next(result),
       error: handleError,
       complete: () => observer.complete(),
@@ -99,7 +106,7 @@ const authLink = setContext((_, { headers }) => {
   return {
     headers: {
       ...headers,
-      ...(token && { Authorization: `Bearer ${token as string}` }),
+      ...(token && { Authorization: `Bearer ${token}` }),
     },
   };
 });

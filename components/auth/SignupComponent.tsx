@@ -4,13 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { AuthCard } from "./AuthCard";
 import { CardContent, CardFooter } from "../ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import {
   ArrowRight,
   CheckCircle2,
   Lock,
   Mail,
-  Phone,
   User as UserIcon,
 } from "lucide-react";
 import {
@@ -34,7 +32,6 @@ import {
   SIGN_UP_WITH_EMAIL,
 } from "@/graphql/mutations/auth";
 import { useMutation } from "@apollo/client";
-import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
 import { cookieStorage } from "@/utils/session";
 import { useRouter } from "next/navigation";

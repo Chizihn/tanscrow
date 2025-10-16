@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import SocialProvider from "./SocialProvider";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -11,7 +9,7 @@ import {
 } from "@/types/auth";
 import { AuthCard } from "./AuthCard";
 import { CardContent, CardFooter } from "../ui/card";
-import { ArrowRight, Lock, Mail, Phone } from "lucide-react";
+import { ArrowRight, Lock, Mail } from "lucide-react";
 import {
   Form,
   FormControl,
