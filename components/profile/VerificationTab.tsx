@@ -51,6 +51,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { SUBMIT_VERIFICATION_DOCUMENT } from "@/graphql/mutations/verification";
+import { MY_VERIFICATION_DOCUMENTS } from "@/graphql/queries/verification";
 
 const documentUploadSchema = z.object({
   documentType: z.nativeEnum(DocumentType),
@@ -88,6 +89,8 @@ export function VerificationTab({
       toast.success("Document submitted successfully!");
       setUploadLoading(null);
     },
+    refetchQueries: [{ query: MY_VERIFICATION_DOCUMENTS }],
+
     onError: (error) => {
       toast.error(error.message || "Failed to submit document");
       setUploadLoading(null);
