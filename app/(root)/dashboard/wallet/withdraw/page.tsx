@@ -31,7 +31,8 @@ import { showErrorToast, showSuccessToast } from "@/components/Toast";
 import PageHeader from "@/components/PageHeader";
 import { WITHDRAW_TO_NIGERIAN_BANK } from "@/graphql/mutations/wallet";
 import { PaymentCurrency } from "@/types/payment";
-import { useAuthStore } from "@/store/auth-store";
+import { useRouter } from "next/router";
+// import { useAuthStore } from "@/store/auth-store";
 
 interface WithdrawInput {
   accountName: string;
@@ -43,6 +44,7 @@ interface WithdrawInput {
 }
 
 export default function WithdrawFundsPage() {
+  const router = useRouter();
   const [bankCode, setBankCode] = useState<string>("");
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [accountName, setAccountName] = useState<string>("");
@@ -59,7 +61,7 @@ export default function WithdrawFundsPage() {
 
   const wallet = data?.wallet ?? null;
 
-  const user = useAuthStore((state) => state.user);
+  // const user = useAuthStore((state) => state.user);
 
   const [
     resolveAccountDetails,
@@ -87,6 +89,10 @@ export default function WithdrawFundsPage() {
         setAccountNumber("");
         setAccountName("");
         setAmount("");
+        // Automatically go back after 5 seconds
+        setTimeout(() => {
+          router.back();
+        }, 5000);
       },
       onError: (error) => {
         // Enhanced error handling for verification/document errors
@@ -151,12 +157,12 @@ export default function WithdrawFundsPage() {
   const totalToReceive = Math.max(numAmount - processingFee, 0);
 
   // Name match check
-  const normalizedAccountName = (accountName || "").toLowerCase().replace(/\s+/g, " ");
-  const normalizedFirstName = (user?.firstName || "").toLowerCase();
-  const normalizedLastName = (user?.lastName || "").toLowerCase();
-  const nameMatches =
-    normalizedAccountName.includes(normalizedFirstName) &&
-    normalizedAccountName.includes(normalizedLastName);
+  // const normalizedAccountName = (accountName || "").toLowerCase().replace(/\s+/g, " ");
+  // const normalizedFirstName = (user?.firstName || "").toLowerCase();
+  // const normalizedLastName = (user?.lastName || "").toLowerCase();
+  // const nameMatches =
+  //   normalizedAccountName.includes(normalizedFirstName) &&
+  //   normalizedAccountName.includes(normalizedLastName);
 
   if (walletError) {
     return <ErrorState message={walletError.message} />;
@@ -285,11 +291,14 @@ export default function WithdrawFundsPage() {
                   number and selected bank.
                 </p>
               )}
-              {!resolvingAccount && accountName && !nameMatches && (
+              {/* {!resolvingAccount && accountName && (
                 <p className="text-sm text-orange-500 mt-2">
-                  Warning: The resolved bank account name does not match your registered name. Withdrawals are only allowed to accounts owned by you. If this is not your account, please use your own bank details.
+                  Warning: The resolved bank account name does not match your
+                  registered name. Withdrawals are only allowed to accounts
+                  owned by you. If this is not your account, please use your own
+                  bank details.
                 </p>
-              )}
+              )} */}
             </div>
           </div>
 
@@ -329,7 +338,7 @@ export default function WithdrawFundsPage() {
           </Button>
         </CardFooter>
       </Card>
-
+      {/* 
       <Card>
         <CardHeader>
           <CardTitle>Recent Withdrawals</CardTitle>
@@ -339,7 +348,7 @@ export default function WithdrawFundsPage() {
             No recent withdrawals
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

@@ -106,15 +106,6 @@ export const GET_TRANSACTION = gql`
         description
         createdAt
       }
-      documents {
-        id
-        url
-        fileName
-        fileType
-        uploadedBy { id firstName lastName }
-        uploadedAt
-        description
-      }
     }
   }
 `;

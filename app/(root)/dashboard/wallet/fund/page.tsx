@@ -56,6 +56,7 @@ export default function FundWalletPage() {
       amount: total,
       currency: PaymentCurrency.NGN,
       paymentGateway: paymentMethod,
+      platform: "WEB",
     };
 
     fundWallet({
@@ -134,7 +135,7 @@ export default function FundWalletPage() {
                     </div>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2 border rounded-md p-3">
+                {/* <div className="flex items-center space-x-2 border rounded-md p-3">
                   <RadioGroupItem
                     value={PaymentGateway.FLUTTERWAVE}
                     id="flutterwave"
@@ -151,7 +152,7 @@ export default function FundWalletPage() {
                       </p>
                     </div>
                   </Label>
-                </div>
+                </div> */}
               </RadioGroup>
             </div>
 

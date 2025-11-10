@@ -1,77 +1,125 @@
 "use client";
 
-import Image from "next/image";
-import { useAuthStore } from "@/store/auth-store";
-import { DEFAULT_USER_IMG } from "@/constants";
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
-  messageText: string;
-  setMessageText: (text: string) => void;
-  onSend: () => void;
-  isSending: boolean;
+  value: string;
+  onChange: (value: string) => void;
+  onSend: (message: string) => void;
+  onTypingChange?: (isTyping: boolean) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  className?: string;
 }
 
 export function MessageInput({
-  messageText,
-  setMessageText,
+  value,
+  onChange,
   onSend,
-  isSending,
+  onTypingChange,
+  disabled = false,
+  placeholder = "Type a message...",
+  className,
 }: MessageInputProps) {
-  const user = useAuthStore((state) => state.user);
+  const [isTyping, setIsTyping] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSend = () => {
-    if (messageText.trim()) {
-      onSend();
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onChange(e.target.value);
+    if (!isTyping && e.target.value.trim()) {
+      setIsTyping(true);
+      onTypingChange?.(true);
+    } else if (isTyping && !e.target.value.trim()) {
+      setIsTyping(false);
+      onTypingChange?.(false);
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleSend = () => {
+    const trimmedMessage = value.trim();
+    if (trimmedMessage && !disabled) {
+      onSend(trimmedMessage);
+      if (isTyping) {
+        setIsTyping(false);
+        onTypingChange?.(false);
+      }
+    }
+  };
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`;
+    }
+  }, [value]);
+
+  // Clean up typing indicator on unmount
+  useEffect(() => {
+    return () => {
+      if (isTyping) {
+        onTypingChange?.(false);
+      }
+    };
+  }, [isTyping, onTypingChange]);
+
   return (
-    <div className="flex items-center p-4 border-t border-gray-200">
-      <div className="flex-shrink-0">
-        <Image
-          src={user?.profileImageUrl || DEFAULT_USER_IMG}
-          alt={`${user?.firstName || "User"} ${user?.lastName || ""}`.trim()}
-          width={32}
-          height={32}
-          className="rounded-full"
-          priority={false}
-          unoptimized={user?.profileImageUrl?.startsWith("data:")} // Handle base64 images
+    <div className={cn("relative w-full", className)}>
+      <div className="relative flex items-end rounded-lg border bg-background">
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={handleInput}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          disabled={disabled}
+          rows={1}
+          className="w-full resize-none border-0 bg-transparent p-3 pr-16 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
+          style={{ minHeight: "44px", maxHeight: "150px" }}
         />
-      </div>
-      <div className="flex-1 ml-3">
-        <div className="relative">
-          <input
-            type="text"
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Type a message..."
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isSending}
-          />
-          {isSending && (
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-            </div>
-          )}
+        <div className="absolute bottom-2 right-2 flex items-center space-x-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+            disabled={disabled}
+          >
+            <span className="text-xs">Attach</span>
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 px-3"
+            onClick={handleSend}
+            disabled={disabled || !value.trim()}
+          >
+            <span className="text-xs">Send</span>
+          </Button>
         </div>
       </div>
-      <button
-        onClick={handleSend}
-        disabled={isSending || !messageText.trim()}
-        className={`ml-3 px-4 py-2 rounded-lg ${
-          isSending || !messageText.trim()
-            ? "bg-gray-300 cursor-not-allowed"
-            : "bg-blue-500 hover:bg-blue-600 text-white"
-        }`}
-      >
-        Send
-      </button>
+
+      <div className="mt-1 flex items-center justify-between px-1">
+        <p className="text-xs text-muted-foreground">
+          Press Enter to send, Shift+Enter for new line
+        </p>
+        {disabled && (
+          <div className="flex items-center text-xs text-muted-foreground">
+            <span className="mr-1">🔄</span>
+            Sending...
+          </div>
+        )}
+      </div>
     </div>
   );
 }

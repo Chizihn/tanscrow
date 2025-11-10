@@ -56,7 +56,6 @@ export type EmailSignupSchema = z.infer<typeof emailSignUpSchema>;
 export type PhoneSignupSchema = z.infer<typeof phoneSignUpSchema>;
 
 export interface Payload {
-  accessToken: string;
-  refreshToken: string;
+  token: string;
   user: User;
 }

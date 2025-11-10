@@ -115,21 +115,21 @@ export function ResetPassword() {
   }
 
   // Error state if no token is available
-  if (!token) {
-    return (
-      <AuthCard
-        title="Invalid Reset Link"
-        description="This password reset link is invalid or has expired. Please request a new one."
-        classname="py-8"
-      >
-        <CardFooter>
-          <Button asChild className="w-full">
-            <Link href="/forgot-password">Request New Reset Link</Link>
-          </Button>
-        </CardFooter>
-      </AuthCard>
-    );
-  }
+  // if (!token) {
+  //   return (
+  //     <AuthCard
+  //       title="Invalid Reset Link"
+  //       description="This password reset link is invalid or has expired. Please request a new one."
+  //       classname="py-8"
+  //     >
+  //       <CardFooter>
+  //         <Button asChild className="w-full">
+  //           <Link href="/forgot-password">Request New Reset Link</Link>
+  //         </Button>
+  //       </CardFooter>
+  //     </AuthCard>
+  //   );
+  // }
 
   return (
     <AuthCard

@@ -33,15 +33,15 @@ export const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID as string;
 
 // utils/session.ts
 export function getAccessToken(): string {
-  return cookieStorage.getItem("accessToken") || "";
+  return cookieStorage.getItem("token") || "";
 }
 
 export function setAccessToken(token: string) {
-  cookieStorage.setItem("accessToken", token);
+  cookieStorage.setItem("token", token);
 }
 
 export function removeAccessToken() {
-  cookieStorage.removeItem("accessToken");
+  cookieStorage.removeItem("token");
 }
 
 export function getRefreshToken(): string {

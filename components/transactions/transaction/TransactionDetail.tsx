@@ -14,6 +14,7 @@ import TransactionActions, { ActionType } from "./TransactionActions";
 import TransactionInfo from "./TransactionInfo";
 import TransactionTimeline from "./TransactionTimeline";
 import TransactionTabs from "./TransactionTab";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   id: string;
@@ -28,7 +29,6 @@ const TransactionDetail: React.FC<Props> = ({ id }) => {
   }>(GET_TRANSACTION, {
     variables: { transactionId: id },
     fetchPolicy: "network-only",
-    // nextFetchPolicy: "cache-first",
     notifyOnNetworkStatusChange: true,
     skip: !id,
     onCompleted: (data) => {
@@ -50,6 +50,7 @@ const TransactionDetail: React.FC<Props> = ({ id }) => {
         <LoadingState message="Loading transaction details..." />
       </>
     );
+
   if (error)
     return (
       <>
@@ -60,6 +61,7 @@ const TransactionDetail: React.FC<Props> = ({ id }) => {
         <ErrorState message={error.message} />
       </>
     );
+
   if (!transaction)
     return (
       <>
@@ -72,7 +74,6 @@ const TransactionDetail: React.FC<Props> = ({ id }) => {
     );
 
   const isBuyer = transaction.buyer.id === user.id;
-  // const isSeller = transaction.seller.id === user.id;
 
   return (
     <div className="space-y-6">
@@ -81,20 +82,29 @@ const TransactionDetail: React.FC<Props> = ({ id }) => {
           parentPath="/dashboard/transactions"
           parentLabel="Back to Transactions"
         />
+
         <TransactionHeader
           transaction={transaction}
           user={user}
           setActiveAction={setActiveAction}
         />
+
         <div className="flex gap-4 mt-2">
-          {isBuyer && (
-            <a href={`/users/${transaction.seller.id}`} target="_blank" rel="noopener noreferrer">
-              <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">View Seller Profile</button>
+          {isBuyer ? (
+            <a
+              href={`/users/${transaction.seller.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="default">View Seller Profile</Button>
             </a>
-          )}
-          {!isBuyer && (
-            <a href={`/users/${transaction.buyer.id}`} target="_blank" rel="noopener noreferrer">
-              <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">View Buyer Profile</button>
+          ) : (
+            <a
+              href={`/users/${transaction.buyer.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="default">View Buyer Profile</Button>
             </a>
           )}
         </div>
@@ -112,8 +122,6 @@ const TransactionDetail: React.FC<Props> = ({ id }) => {
         <TransactionActions
           transaction={transaction}
           actionType={activeAction}
-          // isBuyer={isBuyer}
-          // isSeller={isSeller}
           onClose={() => setActiveAction(null)}
           onComplete={() => {
             refetch();
@@ -122,11 +130,7 @@ const TransactionDetail: React.FC<Props> = ({ id }) => {
         />
       )}
 
-      <TransactionTabs
-        transaction={transaction}
-        //  isBuyer={isBuyer}
-        //  isSeller={isSeller}
-      />
+      <TransactionTabs transaction={transaction} />
     </div>
   );
 };

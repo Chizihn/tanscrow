@@ -13,6 +13,7 @@ import {
   HelpCircle,
   LogOut,
   Logs,
+  MessageSquareText,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { Button } from "../ui/button";
@@ -70,6 +71,13 @@ export function Sidebar() {
       icon: <AlertTriangle className="h-5 w-5" />,
       label: "Disputes",
     },
+
+    {
+      href: "/dashboard/chat",
+      icon: <MessageSquareText className="h-5 w-5" />,
+      label: "Chats",
+    },
+
     {
       href: "/dashboard/profile",
       icon: <User className="h-5 w-5" />,

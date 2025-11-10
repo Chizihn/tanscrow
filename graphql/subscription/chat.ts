@@ -5,38 +5,6 @@ export const CHAT_UPDATES = gql`
     chatUpdates {
       chat {
         id
-
-        messages {
-          id
-
-          sender {
-            id
-            firstName
-            lastName
-            email
-            profileImageUrl
-          }
-          content
-          attachments {
-            id
-            url
-            fileType
-            fileName
-          }
-          isRead
-          createdAt
-        }
-        lastMessageAt
-        createdAt
-        updatedAt
-      }
-      type
-      otherUser {
-        id
-        firstName
-        lastName
-        email
-        profileImageUrl
       }
     }
   }
@@ -62,7 +30,6 @@ export const MESSAGE_UPDATES = gql`
           fileType
           fileName
         }
-        isRead
         createdAt
       }
       type

@@ -2,11 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  EmailSigninSchema,
-  emailSignInSchema,
-  Payload,
-} from "@/types/auth";
+import { EmailSigninSchema, emailSignInSchema, Payload } from "@/types/auth";
 import { AuthCard } from "./AuthCard";
 import { CardContent, CardFooter } from "../ui/card";
 import { ArrowRight, Lock, Mail } from "lucide-react";
@@ -44,27 +40,24 @@ export function SignInComponent() {
   // Store authentication data (token and user info)
   const storeAuthData = (data: Payload) => {
     // Store token in cookie for persistence
-    cookieStorage.setItem("token", data.accessToken);
+    cookieStorage.setItem("token", data.token);
 
     // Update auth store
-    setAccessToken(data.accessToken);
+    setAccessToken(data.token);
     setUser(data.user);
   };
 
   //Sign in with email mutation
-  const [signIn, { loading: signinLoading }] = useMutation(
-    SIGN_IN_WITH_EMAIL,
-    {
-      onCompleted: (data) => {
-        toast.success("Welcome back!");
-        storeAuthData(data.signinWithEmail);
-        router.push("/dashboard");
-      },
-      onError: (error) => {
-        toast.error(error.message || "An error occured");
-      },
-    }
-  );
+  const [signIn, { loading: signinLoading }] = useMutation(SIGN_IN_WITH_EMAIL, {
+    onCompleted: (data) => {
+      toast.success("Welcome back!");
+      storeAuthData(data.signinWithEmail);
+      router.push("/dashboard");
+    },
+    onError: (error) => {
+      toast.error(error.message || "An error occured");
+    },
+  });
 
   // Form submit handlers
   async function onEmailSignInSubmit(data: EmailSigninSchema) {
@@ -77,7 +70,10 @@ export function SignInComponent() {
     <AuthCard title="Welcome Back" description="Sign in to access your account">
       <CardContent className="pt-1 pb-6">
         <Form {...emailSignInForm}>
-          <form onSubmit={emailSignInForm.handleSubmit(onEmailSignInSubmit)} className="space-y-8">
+          <form
+            onSubmit={emailSignInForm.handleSubmit(onEmailSignInSubmit)}
+            className="space-y-8"
+          >
             <FormField
               control={emailSignInForm.control}
               name="email"

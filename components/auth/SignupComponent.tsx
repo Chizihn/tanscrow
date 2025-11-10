@@ -22,15 +22,9 @@ import {
 import { Input } from "../ui/input";
 import Link from "next/link";
 import { Button } from "../ui/button";
-import {
-  EmailSignupSchema,
-  emailSignUpSchema,
-  Payload,
-} from "@/types/auth";
+import { EmailSignupSchema, emailSignUpSchema, Payload } from "@/types/auth";
 import SocialProvider from "./SocialProvider";
-import {
-  SIGN_UP_WITH_EMAIL,
-} from "@/graphql/mutations/auth";
+import { SIGN_UP_WITH_EMAIL } from "@/graphql/mutations/auth";
 import { useMutation } from "@apollo/client";
 import { useAuthStore } from "@/store/auth-store";
 import { cookieStorage } from "@/utils/session";
@@ -61,13 +55,12 @@ export function SignUpComponent() {
   // Store authentication data (token and user info)
   const storeAuthData = (data: Payload) => {
     // Store token in cookie for persistence
-    cookieStorage.setItem("token", data.accessToken);
+    cookieStorage.setItem("token", data.token);
 
     // Update auth store
-    setAccessToken(data.accessToken);
+    setAccessToken(data.token);
     setUser(data.user);
   };
-
 
   //Sign up with email mutation
   const [signUpWithEmail, { loading: emailSignupLoading }] = useMutation(
@@ -85,8 +78,6 @@ export function SignUpComponent() {
     }
   );
 
-
-
   // Form submit handlers
   async function onEmailSignUpSubmit(data: EmailSignupSchema) {
     // Only send the fields needed by the backend (exclude confirmPassword)
@@ -103,8 +94,6 @@ export function SignUpComponent() {
     });
   }
 
-
-
   return (
     <AuthCard
       title="Create an account"
@@ -112,7 +101,10 @@ export function SignUpComponent() {
     >
       <CardContent className="pt-1 pb-6">
         <Form {...emailSignUpForm}>
-          <form onSubmit={emailSignUpForm.handleSubmit(onEmailSignUpSubmit)} className="space-y-8">
+          <form
+            onSubmit={emailSignUpForm.handleSubmit(onEmailSignUpSubmit)}
+            className="space-y-8"
+          >
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={emailSignUpForm.control}

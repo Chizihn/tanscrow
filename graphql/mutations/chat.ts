@@ -4,31 +4,6 @@ export const CREATE_CHAT = gql`
   mutation CreateChat($participantId: String!) {
     createChat(participantId: $participantId) {
       id
-      createdAt
-      updatedAt
-      participants {
-        id
-        name
-        email
-        avatar
-      }
-      messages {
-        id
-        content
-        createdAt
-        sender {
-          id
-          name
-          avatar
-        }
-        attachments {
-          id
-          filename
-          url
-          fileType
-          fileSize
-        }
-      }
     }
   }
 `;
@@ -60,7 +35,6 @@ export const SEND_MESSAGE = gql`
         fileType
         fileName
       }
-      isRead
       createdAt
     }
   }

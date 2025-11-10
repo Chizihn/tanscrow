@@ -59,6 +59,28 @@ export const GET_CHAT = gql`
           fileType
           fileName
         }
+        createdAt
+      }
+    }
+  }
+`;
+
+export const GET_CHAT_BY_PARTICIPANTS = gql`
+  query GetChatByParticipants($participantIds: [String!]!) {
+    getChatByParticipants(participantIds: $participantIds) {
+      id
+      participants {
+        id
+        firstName
+        email
+        lastName
+        profileImageUrl
+      }
+      lastMessage {
+        content
+        sender {
+          id
+        }
         isRead
         createdAt
       }

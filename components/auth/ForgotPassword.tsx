@@ -50,7 +50,7 @@ export function ForgotPassword() {
     setIsLoading(true);
     try {
       const response = await forgotPassword({
-        variables: { email: data.email },
+        variables: { input: { email: data.email } },
       });
 
       if (response.data) {

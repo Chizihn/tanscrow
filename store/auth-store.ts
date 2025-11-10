@@ -3,7 +3,12 @@ import { User } from "@/types/user";
 import { cookieStorage } from "@/utils/session";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { getAccessToken, setAccessToken, removeAccessToken, getRefreshToken, setRefreshToken, removeRefreshToken } from "@/utils/session";
+import {
+  setAccessToken,
+  removeAccessToken,
+  setRefreshToken,
+  removeRefreshToken,
+} from "@/utils/session";
 
 export interface PersistAuth {
   user: Partial<User> | null;
