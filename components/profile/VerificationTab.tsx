@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useRef } from "react";
 import {
   Card,
@@ -9,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Check, FileText, Loader2, Upload } from "lucide-react";
+import { AlertCircle, Check, FileText, Loader2, Upload, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { User } from "@/types/user";
 import {
@@ -20,160 +21,6 @@ import {
 import { ApolloError, useMutation } from "@apollo/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
-import { uploadDocument } from "@/lib/cloudinary";
-
-interface VerificationTabProps {
-  user: User;
-  loading: boolean;
-  error?: ApolloError;
-}
-
-export function VerificationTab({
-  user,
-  loading,
-  error,
-}: VerificationTabProps) {
-  const { setUser } = useAuthStore();
-  const [uploadLoading, setUploadLoading] = useState<DocumentType | null>(null);
-
-  const [submitDocument] = useMutation(SUBMIT_VERIFICATION_DOCUMENT, {
-    onCompleted: (data) => {
-      setUser({
-        ...user,
-        verificationDocuments: [
-          ...(user.verificationDocuments || []),
-          data?.submitVerificationDocument,
-        ].filter((doc): doc is VerificationDocument => doc !== undefined),
-      });
-      toast.success("Document submitted successfully!");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to submit document");
-    },
-  });
-
-  const handleFileUpload = async (
-    file: File,
-    documentNumber: string,
-    documentType: DocumentType
-  ) => {
-    try {
-      if (!documentNumber.trim()) {
-        throw new Error("Please enter a document number");
-      }
-
-      setUploadLoading(documentType);
-
-      // First upload to Cloudinary
-      const uploadResult = await uploadDocument(file);
-
-      if (!uploadResult?.secure_url) {
-        throw new Error("Failed to get upload URL");
-      }
-
-      // Then submit the document data to our API
-      await submitDocument({
-        variables: {
-          input: {
-            documentType,
-            documentNumber,
-            documentUrl: uploadResult.secure_url,
-          },
-        },
-      });
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to upload document"
-      );
-    } finally {
-      setUploadLoading(null);
-    }
-  };
-
-  // Safely access verification documents
-  const verificationDocuments = user?.verificationDocuments || [];
-
-  // Check if a document of a specific type exists
-  const hasDocumentType = (type: DocumentType) => {
-    return verificationDocuments.some((doc) => doc.documentType === type);
-  };
-
-  // Format date safely
-  const formatDate = (dateString: string | Date) => {
-    try {
-      return new Date(dateString).toLocaleDateString();
-    } catch (error) {
-      console.log("Invalid date", error);
-      return "Invalid date";
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Identity Verification</CardTitle>
-        <CardDescription>
-          Verify your identity to unlock all features of the platform
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {loading && <LoadingState />}
-
-        {error && <ErrorState />}
-
-        {!loading && !error && (
-          <>
-            <VerificationItem
-              title="ID Verification"
-              description="Upload a government-issued ID card"
-              isVerified={hasDocumentType(DocumentType.NATIONAL_ID)}
-              documentType={DocumentType.NATIONAL_ID}
-              isLoading={uploadLoading === DocumentType.NATIONAL_ID}
-              onFileSelected={handleFileUpload}
-            />
-
-            <VerificationItem
-              title="Address Verification"
-              description="Upload a utility bill or bank statement"
-              isVerified={hasDocumentType(DocumentType.UTILITY_BILL)}
-              documentType={DocumentType.UTILITY_BILL}
-              isLoading={uploadLoading === DocumentType.UTILITY_BILL}
-              onFileSelected={handleFileUpload}
-            />
-
-            {verificationDocuments.length > 0 && (
-              <SubmittedDocuments
-                documents={verificationDocuments}
-                formatDate={formatDate}
-              />
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function LoadingState() {
-  return (
-    <div className="flex items-center justify-center p-6">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <span className="ml-2">Loading verification data...</span>
-    </div>
-  );
-}
-
-function ErrorState() {
-  return (
-    <Alert variant="destructive">
-      <AlertCircle className="h-4 w-4" />
-      <AlertDescription>
-        Failed to load verification documents. Please try again later.
-      </AlertDescription>
-    </Alert>
-  );
-}
 
 import {
   Dialog,
@@ -182,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -211,14 +59,154 @@ const documentUploadSchema = z.object({
 
 type DocumentUploadForm = z.infer<typeof documentUploadSchema>;
 
+interface VerificationTabProps {
+  user: User;
+  loading: boolean;
+  error?: ApolloError;
+}
+
+export function VerificationTab({
+  user,
+  loading,
+  error,
+}: VerificationTabProps) {
+  const { setUser } = useAuthStore();
+  const [uploadLoading, setUploadLoading] = useState<DocumentType | null>(null);
+
+  const [submitDocument] = useMutation(SUBMIT_VERIFICATION_DOCUMENT, {
+    onCompleted: (data) => {
+      const newDoc = data?.submitVerificationDocument;
+      if (newDoc) {
+        setUser({
+          ...user,
+          verificationDocuments: [
+            ...(user.verificationDocuments || []),
+            newDoc,
+          ],
+        });
+      }
+      toast.success("Document submitted successfully!");
+      setUploadLoading(null);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to submit document");
+      setUploadLoading(null);
+    },
+  });
+
+  const handleSubmit = async (
+    documentNumber: string,
+    documentType: DocumentType
+  ) => {
+    setUploadLoading(documentType);
+
+    try {
+      await submitDocument({
+        variables: {
+          input: {
+            documentType,
+            documentNumber,
+            // documentUrl intentionally omitted
+          },
+        },
+      });
+    } catch (err) {
+      console.error("Submission error:", err);
+    }
+  };
+
+  const verificationDocuments = user?.verificationDocuments || [];
+  const hasDocumentType = (type: DocumentType) =>
+    verificationDocuments.some((doc) => doc.documentType === type);
+
+  const formatDate = (dateString: string | Date) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return "Invalid date";
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Identity Verification</CardTitle>
+        <CardDescription>
+          Verify your identity to unlock all features. You control when to
+          submit.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {loading && <LoadingState />}
+        {error && <ErrorState />}
+
+        {!loading && !error && (
+          <>
+            <VerificationItem
+              title="ID Verification"
+              description="Government-issued ID (National ID, Driver's License, etc.)"
+              isVerified={hasDocumentType(DocumentType.NATIONAL_ID)}
+              documentType={DocumentType.NATIONAL_ID}
+              isLoading={uploadLoading === DocumentType.NATIONAL_ID}
+              onSubmit={handleSubmit}
+            />
+
+            <VerificationItem
+              title="Address Verification"
+              description="Recent utility bill, bank statement, or residence proof"
+              isVerified={hasDocumentType(DocumentType.UTILITY_BILL)}
+              documentType={DocumentType.UTILITY_BILL}
+              isLoading={uploadLoading === DocumentType.UTILITY_BILL}
+              onSubmit={handleSubmit}
+            />
+
+            {verificationDocuments.length > 0 && (
+              <SubmittedDocuments
+                documents={verificationDocuments}
+                formatDate={formatDate}
+              />
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <span className="ml-3 text-muted-foreground">
+        Loading verification data...
+      </span>
+    </div>
+  );
+}
+
+function ErrorState() {
+  return (
+    <Alert variant="destructive">
+      <AlertCircle className="h-4 w-4" />
+      <AlertDescription>
+        Failed to load verification documents. Please refresh or try again
+        later.
+      </AlertDescription>
+    </Alert>
+  );
+}
+
 interface VerificationItemProps {
   title: string;
   description: string;
   isVerified: boolean;
   documentType: DocumentType;
   isLoading: boolean;
-  onFileSelected: (
-    file: File,
+  onSubmit: (
     documentNumber: string,
     documentType: DocumentType
   ) => Promise<void>;
@@ -230,10 +218,12 @@ function VerificationItem({
   isVerified,
   documentType: initialDocumentType,
   isLoading,
-  onFileSelected,
+  onSubmit,
 }: VerificationItemProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<DocumentUploadForm>({
     resolver: zodResolver(documentUploadSchema),
@@ -243,50 +233,70 @@ function VerificationItem({
     },
   });
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const values = form.getValues();
-      await onFileSelected(file, values.documentNumber, values.documentType);
-      setIsDialogOpen(false);
-      form.reset();
+      setSelectedFile(file);
     }
   };
 
+  const removeFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleSubmitClick = async () => {
+    const isValid = await form.trigger();
+    if (!isValid || !selectedFile) {
+      if (!selectedFile) {
+        toast.error("Please select a file");
+      }
+      return;
+    }
+
+    const values = form.getValues();
+    await onSubmit(values.documentNumber, values.documentType);
+    setIsDialogOpen(false);
+    form.reset();
+    setSelectedFile(null);
+  };
+
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-full bg-muted">
-          <FileText className="h-5 w-5" />
+    <div className="flex items-center justify-between p-5 border rounded-xl hover:border-primary/30 transition-colors">
+      <div className="flex items-center gap-4">
+        <div className="p-3 rounded-full bg-muted">
+          <FileText className="h-6 w-6" />
         </div>
         <div>
-          <p className="font-medium">{title}</p>
+          <p className="font-semibold text-base">{title}</p>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
+
       <div>
         {isVerified ? (
-          <Badge variant="success" className="flex items-center gap-1">
-            <Check className="h-3 w-3" /> Verified
+          <Badge variant="success" className="text-sm px-3 py-1">
+            <Check className="h-3.5 w-3.5 mr-1" /> Verified
           </Badge>
         ) : (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" variant="outline">
                 <Upload className="mr-2 h-4 w-4" />
                 Upload
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
-                <DialogTitle>Upload Verification Document</DialogTitle>
+                <DialogTitle>Submit {title}</DialogTitle>
                 <DialogDescription>
-                  Please select the document type and enter the document number
-                  before uploading.
+                  Double-check your details before submitting. You can change
+                  anything before clicking &quot;Submit&quot;.
                 </DialogDescription>
               </DialogHeader>
+
               <Form {...form}>
-                <form className="space-y-4">
+                <form className="space-y-5">
                   <FormField
                     control={form.control}
                     name="documentType"
@@ -299,7 +309,7 @@ function VerificationItem({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a document type" />
+                              <SelectValue />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -314,6 +324,7 @@ function VerificationItem({
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="documentNumber"
@@ -321,44 +332,83 @@ function VerificationItem({
                       <FormItem>
                         <FormLabel>Document Number</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Enter document number"
-                            {...field}
-                          />
+                          <Input placeholder="e.g., A12345678" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/*,.pdf"
-                    onChange={handleFileChange}
-                  />
-                  <Button
-                    type="button"
-                    className="w-full"
-                    onClick={async () => {
-                      const result = await form.trigger();
-                      if (result) {
-                        fileInputRef.current?.click();
-                      }
-                    }}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading...
-                      </>
+
+                  <div className="space-y-3">
+                    <FormLabel>File</FormLabel>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*,.pdf"
+                      onChange={handleFileSelect}
+                    />
+
+                    {!selectedFile ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Choose File
+                      </Button>
                     ) : (
-                      "Select File"
+                      <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                        <div className="flex items-center gap-2 text-sm">
+                          <FileText className="h-4 w-4" />
+                          <span className="font-medium truncate max-w-[200px]">
+                            {selectedFile.name}
+                          </span>
+                          <span className="text-muted-foreground">
+                            ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={removeFile}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
-                  </Button>
+                  </div>
                 </form>
               </Form>
+
+              <DialogFooter className="mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    form.reset();
+                    setSelectedFile(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmitClick}
+                  disabled={isLoading || !selectedFile}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Document"
+                  )}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         )}
@@ -367,29 +417,34 @@ function VerificationItem({
   );
 }
 
-interface SubmittedDocumentsProps {
-  documents: VerificationDocument[];
-  formatDate: (date: string | Date) => string;
-}
-
 function SubmittedDocuments({
   documents,
   formatDate,
-}: SubmittedDocumentsProps) {
+}: {
+  documents: VerificationDocument[];
+  formatDate: (date: string | Date) => string;
+}) {
   return (
-    <div className="mt-6">
-      <h4 className="text-sm font-medium mb-3">Submitted Documents</h4>
-      <div className="space-y-3">
+    <div className="mt-10">
+      <h3 className="text-lg font-semibold mb-4">Submitted Documents</h3>
+      <div className="space-y-4">
         {documents.map((doc) => (
           <div
             key={doc.id}
-            className="flex items-center justify-between p-3 border rounded-lg"
+            className="flex items-center justify-between p-5 border rounded-xl bg-muted/20"
           >
-            <div>
-              <p className="font-medium">{doc.documentType}</p>
-              <p className="text-xs text-muted-foreground">
-                Submitted on {formatDate(doc.submittedAt)}
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-full bg-primary/10">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium">
+                  {doc.documentType.replace(/_/g, " ")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Submitted on {formatDate(doc.submittedAt)}
+                </p>
+              </div>
             </div>
             <Badge
               variant={
@@ -399,6 +454,7 @@ function SubmittedDocuments({
                   ? "destructive"
                   : "secondary"
               }
+              className="text-sm"
             >
               {doc.verificationStatus}
             </Badge>

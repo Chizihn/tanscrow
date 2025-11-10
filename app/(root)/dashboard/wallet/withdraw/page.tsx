@@ -31,7 +31,7 @@ import { showErrorToast, showSuccessToast } from "@/components/Toast";
 import PageHeader from "@/components/PageHeader";
 import { WITHDRAW_TO_NIGERIAN_BANK } from "@/graphql/mutations/wallet";
 import { PaymentCurrency } from "@/types/payment";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 // import { useAuthStore } from "@/store/auth-store";
 
 interface WithdrawInput {
@@ -117,7 +117,7 @@ export default function WithdrawFundsPage() {
       setAccountName("");
       resolveAccountDetails({
         variables: {
-          input: { accountNumber, bankCode },
+          input: { accountNumber, bankCode: "001" },
         },
       });
     } else {
