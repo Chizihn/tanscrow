@@ -1,17 +1,16 @@
 import React from "react";
-import { Button } from "../ui/button";
-import { Separator } from "../ui/separator";
+// import { Button } from "../ui/button";
+// import { Separator } from "../ui/separator";
 
 const SocialProvider = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSocialAuth = (provider: any) => {
-    console.log(`Authenticating with ${provider}`);
-    // Implement social authentication logic here
-  };
+  // const handleSocialAuth = (provider: any) => {
+  //   console.log(`Authenticating with ${provider}`);
+  //   // Implement social authentication logic here
+  // };
 
   return (
     <>
-      <div className="relative">
+      {/* <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <Separator className="w-full" />
         </div>
@@ -47,7 +46,7 @@ const SocialProvider = () => {
           </svg>
           Google
         </Button>
-      </div>
+      </div> */}
     </>
   );
 };

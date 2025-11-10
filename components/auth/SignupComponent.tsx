@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Lock,
   Mail,
+  Phone,
   User as UserIcon,
 } from "lucide-react";
 import {
@@ -31,14 +32,11 @@ import { cookieStorage } from "@/utils/session";
 import { useRouter } from "next/navigation";
 import { showErrorToast, showSuccessToast } from "../Toast";
 
-// Sign Up component for the sign-up page
 export function SignUpComponent() {
   const router = useRouter();
-
   const { setUser, setAccessToken } = useAuthStore();
 
-  // Email sign up form
-  const emailSignUpForm = useForm({
+  const emailSignUpForm = useForm<EmailSignupSchema>({
     resolver: zodResolver(emailSignUpSchema),
     defaultValues: {
       firstName: "",
@@ -50,26 +48,18 @@ export function SignUpComponent() {
     },
   });
 
-  // Phone sign up fo
-
-  // Store authentication data (token and user info)
   const storeAuthData = (data: Payload) => {
-    // Store token in cookie for persistence
     cookieStorage.setItem("token", data.token);
-
-    // Update auth store
     setAccessToken(data.token);
     setUser(data.user);
   };
 
-  //Sign up with email mutation
   const [signUpWithEmail, { loading: emailSignupLoading }] = useMutation(
     SIGN_UP_WITH_EMAIL,
     {
       onCompleted: (data) => {
         showSuccessToast("Account created successfully!");
         storeAuthData(data.signupWithEmail);
-
         router.push("/verify");
       },
       onError: (error) => {
@@ -78,14 +68,12 @@ export function SignUpComponent() {
     }
   );
 
-  // Form submit handlers
   async function onEmailSignUpSubmit(data: EmailSignupSchema) {
-    // Only send the fields needed by the backend (exclude confirmPassword)
     const formData = {
       firstName: data.firstName,
       lastName: data.lastName,
-      phoneNumber: data.phoneNumber,
       email: data.email,
+      phoneNumber: data.phoneNumber,
       password: data.password,
     };
 
@@ -105,6 +93,7 @@ export function SignUpComponent() {
             onSubmit={emailSignUpForm.handleSubmit(onEmailSignUpSubmit)}
             className="space-y-8"
           >
+            {/* First & Last Name */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={emailSignUpForm.control}
@@ -144,6 +133,7 @@ export function SignUpComponent() {
               />
             </div>
 
+            {/* Email */}
             <FormField
               control={emailSignUpForm.control}
               name="email"
@@ -165,6 +155,28 @@ export function SignUpComponent() {
               )}
             />
 
+            {/* Phone Number - NOW ADDED BACK */}
+            <FormField
+              control={emailSignUpForm.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" /> Phone Number
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="+1 (555) 123-4567"
+                      className="bg-secondary/50"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Password */}
             <FormField
               control={emailSignUpForm.control}
               name="password"
@@ -186,6 +198,7 @@ export function SignUpComponent() {
               )}
             />
 
+            {/* Confirm Password */}
             <FormField
               control={emailSignUpForm.control}
               name="confirmPassword"
@@ -207,6 +220,7 @@ export function SignUpComponent() {
               )}
             />
 
+            {/* Submit Button */}
             <Button
               type="submit"
               className="w-full mt-6 group"
